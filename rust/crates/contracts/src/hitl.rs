@@ -12,7 +12,9 @@ use crate::common::{Din, Id};
 use crate::escrows::EscrowView;
 
 /// انواع درخواست HITL — فعلاً فقط تسویهٔ امانت.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema,
+)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum HitlKind {
     /// تسویهٔ امانت
@@ -20,7 +22,9 @@ pub enum HitlKind {
 }
 
 /// وضعیت درخواست HITL.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema,
+)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum HitlStatus {
     /// در انتظار

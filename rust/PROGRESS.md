@@ -9,14 +9,50 @@
 | 1 | هسته دامنه خالص — dropagentx-domain (money/ledger/escrow/charter/errors) | ✅ انجام شد | **v2/10** |
 | 2 | پیوند persistence — sqlx + Outbox + Genesis (legacy:genesis:v1) | ✅ انجام شد | **v3/10** |
 | 3 | قراردادها — serde + utoipa (OpenAPI 3.1) | ✅ انجام شد | **v4/10** |
-| 4 | سرور Axum + داشبورد static | ⬜ | — |
+| 4 | سرور Axum + داشبورد static | ✅ انجام شد | **v5/10** |
 | 5 | بات teloxide + صف HITL (آستانه ۵۰,۰۰۰ Đ) | ⬜ | — |
 | 6 | AI Gateway — ۶ ایجنت، ۱۶ مهارت، سقف و audit | ⬜ | — |
 | 7 | ادغام فرانت + WASM اختیاری | ⬜ | — |
 | 8 | Dual-run → مهاجرت داده → Cut-over | ⬜ | — |
 | 9 | امضای نهایی — تحویل نسخه ۱۰ از ۱۰ | ⬜ | — |
 
-**وضعیت فعلی: v4/10 — اسکلت ۱۳ کرِیت + دامنهٔ خالص + ماندگاری + قراردادهای وایر (serde/utoipa/OpenAPI 3.1 + امنیت قراردادی) — کل ورک‌اسپیس ۱۲۵ تست سبز، clippy صفر خطا.**
+**وضعیت فعلی: v5/10 — سرور Axum کامل (۴۶ مسیر رجیستری واحد + امنیت چندلایه + OpenAPI/ردوک + ServeDir) — کل ورک‌اسپیس ۲۰۱ تست سبز، clippy صفر خطا.**
+
+---
+
+## فاز ۴ — سرور Axum + داشبورد static (v5/10) ✅
+
+**تحویل‌داده‌شده‌ها** — جایگزین کامل فستیفای v3 (پورت `back/server/src/*` طبق رجیستری فاز ۳):
+
+| قطعه | فایل | توضیح |
+|---|---|---|
+| پیکربندی fail-closed | `crates/server/src/config.rs` | ۱۳ متغیر env؛ **ADR-006 همه‌یا-هیچ**: کانفیگ ناقص LLM (`OPENAI_BASE_URL`/`OPENAI_API_KEY`/`MODEL`) بوت را با exit 2 رد می‌کند — هرگز open |
+| امنیت چندلایه | `crates/server/src/middleware.rs` | گارد `X-KIA-Key` (مقایسهٔ زمان‌ثابت فاز ۳: 503 `ADMIN_DISABLED`/401 `ADMIN_KEY_REQUIRED`/401 `INVALID_ADMIN_KEY`) + نرخ پنجرهٔ لغزان به‌صورت middleware آکسوم با باکت ادمین جدا (X-Forwarded-For اول، سپس ConnectInfo) و بدنهٔ ۴۲۹ دقیق فاز ۳ |
+| پاکت خطا | `crates/server/src/error.rs` | `ApiFailure` = Http/Domain/Db → بدنهٔ `{error:{code,message,meta?}}` با وضعیت صادقانه؛ خطای دامنهٔ خروجی از تراکنش (`DbError::Domain`) در مسیر نگاشت ۴۰۴/۴۲۲ می‌ماند |
+| ۴۶ مسیر + سند | `crates/server/src/routes.rs` | همان رجیستری واحد ADR-005؛ `/api/v1/openapi.json` (سند inline کامل، بدون `$ref`) + صفحهٔ ردوک `/api/v1/docs`؛ 404 مسیر ناشناخته هم پاکت است |
+| هندلرها | `crates/server/src/handlers/*` | system (health عمیق/بکاپ/economy)، accounts (ذخیرهٔ `RESERVED_ID`/`DUPLICATE_ACCOUNT`)، wallet (سقف سالانهٔ مادهٔ ۳ **داخل همان تراکنش** — دو ضرب هم‌زمان هرگز از سقف نمی‌گذرد)، escrows (۹ گذار از دامنهٔ خالص)، hitl (تأیید ⇒ تسویهٔ اتمی ۹۰/۱۰)، ai (گیت‌های هویت دقیق)، dashboard (۱۵ مسیر پاکت `{ok,data}`) |
+| تبدیل‌گرها | `crates/server/src/views.rs` | تنها نقطهٔ ساخت DTO وایر — nullable صریح، وضعیت‌های SCREAMING/lowercase، ریسک از آستانهٔ منشور |
+| رجیستری AI | `crates/server/src/state.rs` | ۶ ایجنت Zenovix + ۱۶ مهارت KIA-OS با متادیتای مجوز — دادهٔ ثابت `/ai/agents` و `/ai/skills` (فاز ۶ موتور را روی همین شناسه‌ها می‌سازد) |
+| کوئری‌های فاز ۴ | `crates/db/src/queries.rs` (فعال‌سازی ماژول) | صف HITL/محصولات/audit/بکاپ که فاز ۲ آماده کرده بود + `count_users/count_escrows/count_hitl/sales_by_product` — ستون‌های محصول یک‌به‌یک `schema.prisma` (`priceDin`)؛ salesCount از اسکروهای RELEASED مشتق می‌شود |
+| لاگ JSON | `crates/server/src/main.rs` | tracing-subscriber فرمت JSON + TraceLayer آکسوم؛ بوت با exit code صریح (۲ کانفیگ، ۳ دیتابیس، ۴ بایند) |
+| بیلد دو مرحله‌ای | `Dockerfile` + `.dockerignore` | builder (`rust:1.99-slim`) → runtime (`distroless/cc-debian12:nonroot`) — تک‌باینری، مهاجرت‌ها جاسازی‌شده، user غیر-root |
+
+**معیارهای پذیرش ADR-009 — هر سه سبز:**
+
+1. **تست‌های سرور پورت و سبز — ۷۷ تست فاز ۴** (۲۰ واحد + ۵۷ یکپارچگی روی `oneshot` معادل `app.inject`): مسیر کامل mint→escrow→release **دقیقاً ۹۰/۱۰** (seller 360/treasury 40 از 400)؛ replay با کلید کیف و اسکرو **دوبار پرداخت نمی‌کند**؛ overdraft سوزاندن/تأمین **۴۲۲ رد**؛ **۴۰۱/۴۰۴/۴۲۲/۴۲۹ همان‌ها**؛ HITL ۶۰٬۰۰۰ Đ از صف می‌گذرد و تأییدش دقیقاً ۹۰/۱۰ تسویه می‌کند؛ تصمیم دوم ادمین → `HITL_ALREADY_DECIDED` تایپ‌شده با بازپرداخت صفر؛ بدنهٔ خراب (float/کلید کوتاه/id فاصله‌دار) → ۴۰۰ `INVALID_REQUEST`؛ آرشیو محصول نرم است؛ PUT تنظیمات ۵۰۱ صادقانه.
+2. **داشبورد static در برابر سرور Rust** — ServeDir برای build موجود (`STATIC_DIR`)، ریشه → index، asset غایب → ۴۰۴ واقعی؛ + smoke باینری واقعی: بوت، health با چیپ‌ها، ثبت حساب، اقتصاد، openapi.json و docs همه ۲۰۰.
+3. **بوت با کانفیگ ناقص LLM رد می‌شود** — آزمایش واقعی: `OPENAI_BASE_URL`+`OPENAI_API_KEY` بدون `MODEL` → `boot refused: Incomplete LLM config (ADR-006 all-or-nothing) — missing: MODEL`، exit 2.
+
+**تصمیم‌های ثبت‌شدهٔ فاز ۴:**
+
+* **سقف ضرب داخل تراکنش** — محاسبهٔ `mintedThisYear` از وضعیتِ لودشدهٔ دفتر (نه کوئری جدا) تا دو ضرب هم‌زمان هرگز با خوانش کهنه از سقف بگذرند؛ مدل خواندن سالانهٔ دقیق با dual-run فاز ۸ بازبینی می‌شود.
+* **فیلدهای dashboard-only محصول ستون ندارند** — `schema.prisma` فقط `priceDin` دارد؛ Stars صفر، stock −۱ (نامحدود)، featured false و salesCount = شمارش اسکروهای RELEASED با `productRef` — نمادهای UI از جدول‌های زنده مشتق می‌شوند، نه ستون‌های جعلی.
+* **واژگان وضعیت سفارش داشبورد** — `CREATED→pending`، `FUNDED→paid`، و… همان واژگان فیلتر رجیستری؛ وضعیت‌های بیرون فیلتر (released/disputed/expired) lowercase.
+* **ServeDir خالص بدون SPA fallback** — asset غایب ۴۰۴ واقعی می‌دهد؛ deep-link fallback با ادغام فرانت فاز ۷ شکل قطعی می‌گیرد (ساخت داشبورد فعلی در ریپو موجود نیست).
+* **هویت تصمیم‌گیرندهٔ داشبورد** — مسیر `/approvals/{id}/decide` فیلد هویت ندارد؛ عامل ردیف audit `"dashboard"` است (مسیر `/hitl/{id}/approve` هویت را از بدنه می‌گیرد).
+* **پاسخ `/ai/chat` تا فاز ۶** — گیت‌های هویت/مجوز دقیق پورت شده‌اند؛ پس از عبور گیت‌ها `AI_DISABLED` 503 با پیام صادقانه (همان کد وایر — additive).
+
+**آمار فاز ۴:** ~۳٬۹۰۰ LOC سرور + ~۹۰۰ LOC تست · **۷۷ تست جدید** (۲۰ واحد + ۵۷ یکپارچگی) · مجموع ورک‌اسپیس: **۲۰۱ سبز** · clippy `-D warnings` صفر خطا · cargo fmt تمیز.
 
 ---
 

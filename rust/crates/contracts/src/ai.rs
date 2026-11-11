@@ -10,7 +10,9 @@ use utoipa::ToSchema;
 use crate::common::Id;
 
 /// نام ۶ ایجنت Zenovix.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum AiAgentName {
     /// هماهنگ‌کننده
@@ -28,7 +30,9 @@ pub enum AiAgentName {
 }
 
 /// نوع مجوز مهارت — `read/write/money/staff`.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema,
+)]
 #[serde(rename_all = "lowercase")]
 pub enum AiSkillKind {
     /// فقط‌خواندنی

@@ -134,7 +134,8 @@ impl Serialize for Id {
 impl<'de> Deserialize<'de> for Id {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
-        Self::new(s.clone()).ok_or_else(|| DeError::invalid_value(Unexpected::Str(&s), &"a valid wire id"))
+        Self::new(s.clone())
+            .ok_or_else(|| DeError::invalid_value(Unexpected::Str(&s), &"a valid wire id"))
     }
 }
 
@@ -187,8 +188,9 @@ impl Serialize for IdempotencyKey {
 impl<'de> Deserialize<'de> for IdempotencyKey {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
-        Self::new(s.clone())
-            .ok_or_else(|| DeError::invalid_value(Unexpected::Str(&s), &"an idempotency key of 8..=128 chars"))
+        Self::new(s.clone()).ok_or_else(|| {
+            DeError::invalid_value(Unexpected::Str(&s), &"an idempotency key of 8..=128 chars")
+        })
     }
 }
 
@@ -242,7 +244,10 @@ impl<'de> Deserialize<'de> for IsoDateTime {
     fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
         let s = String::deserialize(deserializer)?;
         Self::new(s.clone()).ok_or_else(|| {
-            DeError::invalid_value(Unexpected::Str(&s), &"an RFC 3339 timestamp with an explicit offset")
+            DeError::invalid_value(
+                Unexpected::Str(&s),
+                &"an RFC 3339 timestamp with an explicit offset",
+            )
         })
     }
 }
@@ -312,7 +317,9 @@ impl ApiError {
 // ── وضعیت امانت ─────────────────────────────────────────────────────────────
 
 /// ۸ وضعیت ماشین امانت (ADR-004) — دقیقاً همان رشته‌های TS.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema,
+)]
 #[serde(rename_all = "SCREAMING_SNAKE_CASE")]
 pub enum EscrowStatus {
     /// ساخته‌شده — پول جابه‌جا نشده
@@ -388,13 +395,17 @@ mod tests {
 
     #[test]
     fn error_envelope_roundtrip() {
-        let json = r#"{"error":{"code":"ACCOUNT_OVERDRAFT","message":"no funds","meta":{"needed":90}}}"#;
+        let json =
+            r#"{"error":{"code":"ACCOUNT_OVERDRAFT","message":"no funds","meta":{"needed":90}}}"#;
         let env: ErrorEnvelope = from_str(json).unwrap();
         assert_eq!(env.error.code, "ACCOUNT_OVERDRAFT");
         assert_eq!(env.error.meta, Some(Meta::from([("needed".into(), MetaValue::Int(90))])));
         let bare: ErrorEnvelope =
             from_str(r#"{"error":{"code":"ESCROW_NOT_FOUND","message":"missing"}}"#).unwrap();
         assert_eq!(bare.error.meta, None);
-        assert_eq!(to_string(&bare).unwrap(), r#"{"error":{"code":"ESCROW_NOT_FOUND","message":"missing"}}"#);
+        assert_eq!(
+            to_string(&bare).unwrap(),
+            r#"{"error":{"code":"ESCROW_NOT_FOUND","message":"missing"}}"#
+        );
     }
 }

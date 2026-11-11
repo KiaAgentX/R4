@@ -6,7 +6,6 @@
 //! ۲. serialize مجدد در Rust همان JSON را می‌دهد (camelCase، null صریح،
 //!    optional غایب، صحیح امن) — یعنی کلاینت TS همان شکل را می‌فهمد.
 
-
 // تست‌ها جای مشروع expect هستند — ورودی گلدن باید شکست صریح بدهد
 #![allow(clippy::expect_used)]
 
@@ -25,7 +24,8 @@ use serde_json::{json, Value};
 const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 
 fn golden() -> Value {
-    let raw = std::fs::read_to_string(format!("{FIXTURES}/golden-wire.json")).expect("golden-wire.json");
+    let raw =
+        std::fs::read_to_string(format!("{FIXTURES}/golden-wire.json")).expect("golden-wire.json");
     serde_json::from_str(&raw).expect("golden wire parses")
 }
 
@@ -119,5 +119,7 @@ fn malformed_wire_is_rejected_like_zod() {
     // پاسخ سلام ناقص — RESPONSE_MISMATCH در client.test.ts
     assert!(serde_json::from_value::<HealthResponse>(json!({"status": "ok"})).is_err());
     // پاکت خطای بدشکل
-    assert!(serde_json::from_value::<ErrorEnvelope>(json!({"error": {"message": "no code"}})).is_err());
+    assert!(
+        serde_json::from_value::<ErrorEnvelope>(json!({"error": {"message": "no code"}})).is_err()
+    );
 }

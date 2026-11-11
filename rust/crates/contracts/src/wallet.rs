@@ -64,7 +64,10 @@ mod tests {
         let json = r#"{"accountId":"user:ali","amount":500,"memo":"welcome","idempotencyKey":"mint-ali-1"}"#;
         let req: MintRequest = from_str(json).unwrap();
         assert_eq!(req.amount, Din::new(500).unwrap());
-        assert_eq!(req.idempotency_key.as_ref().map(ToString::to_string), Some("mint-ali-1".into()));
+        assert_eq!(
+            req.idempotency_key.as_ref().map(ToString::to_string),
+            Some("mint-ali-1".into())
+        );
         assert_eq!(to_string(&req).unwrap(), json);
     }
 

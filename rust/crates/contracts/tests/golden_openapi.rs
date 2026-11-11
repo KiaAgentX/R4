@@ -25,7 +25,6 @@
 //!     format date-time هستند سخت‌گیری می‌شود.
 //! 11. آرایهٔ `required` به‌صورت مجموعه مقایسه می‌شود (ترتیب اعلامیه‌ها).
 
-
 // تست‌ها جای مشروع expect هستند — ورودی گلدن باید شکست صریح بدهد
 #![allow(clippy::expect_used)]
 
@@ -35,7 +34,8 @@ use serde_json::{Map, Value};
 const FIXTURES: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/tests/fixtures");
 
 fn golden() -> Value {
-    let raw = std::fs::read_to_string(format!("{FIXTURES}/golden-openapi.json")).expect("golden-openapi.json");
+    let raw = std::fs::read_to_string(format!("{FIXTURES}/golden-openapi.json"))
+        .expect("golden-openapi.json");
     serde_json::from_str(&raw).expect("golden openapi parses")
 }
 
@@ -58,7 +58,8 @@ fn num_to_f64(v: &mut Value) {
     }
 }
 
-const DROP_KEYS: &[&str] = &["$schema", "description", "title", "additionalProperties", "propertyNames"];
+const DROP_KEYS: &[&str] =
+    &["$schema", "description", "title", "additionalProperties", "propertyNames"];
 
 fn canon(v: &Value, required: Option<&Vec<String>>) -> Value {
     let mut out = Map::new();
@@ -72,8 +73,10 @@ fn canon(v: &Value, required: Option<&Vec<String>>) -> Value {
             // anyOf/oneOf شامل null
             for combinator in ["anyOf", "oneOf"] {
                 if let Some(Value::Array(members)) = map.get(combinator) {
-                    let non_null: Vec<&Value> =
-                        members.iter().filter(|m| m.get("type") != Some(&Value::String("null".into()))).collect();
+                    let non_null: Vec<&Value> = members
+                        .iter()
+                        .filter(|m| m.get("type") != Some(&Value::String("null".into())))
+                        .collect();
                     if non_null.len() == 1 && members.len() == 2 {
                         // [T, null] → T + nullable
                         let mut inner = canon(non_null[0], required);
@@ -142,7 +145,11 @@ fn canon(v: &Value, required: Option<&Vec<String>>) -> Value {
                                 .cloned()
                                 .collect();
                             let had_null = list.len() != types.len();
-                            let scalar = if list.len() == 1 { list.pop().expect("one") } else { Value::Array(list) };
+                            let scalar = if list.len() == 1 {
+                                list.pop().expect("one")
+                            } else {
+                                Value::Array(list)
+                            };
                             if had_null && required.is_some() {
                                 out.insert("nullable".into(), Value::Bool(true));
                             }
@@ -163,16 +170,22 @@ fn canon(v: &Value, required: Option<&Vec<String>>) -> Value {
                         } else if k == "enum" {
                             out.insert(k.clone(), Value::Array(items.clone()));
                         } else if k == "anyOf" || k == "oneOf" {
-                            out.insert(k.clone(), Value::Array(items.iter().map(|m| canon(m, required)).collect()));
+                            out.insert(
+                                k.clone(),
+                                Value::Array(items.iter().map(|m| canon(m, required)).collect()),
+                            );
                         } else {
                             out.insert(k.clone(), canon(val, None));
                         }
                     }
                     Value::Object(_) => {
                         if k == "properties" {
-                            let req_list = map.get("required").and_then(Value::as_array).and_then(|a| {
-                                a.iter().map(|v| v.as_str().map(str::to_string)).collect::<Option<Vec<String>>>()
-                            });
+                            let req_list =
+                                map.get("required").and_then(Value::as_array).and_then(|a| {
+                                    a.iter()
+                                        .map(|v| v.as_str().map(str::to_string))
+                                        .collect::<Option<Vec<String>>>()
+                                });
                             let mut props = Map::new();
                             for (pk, pv) in val.as_object().expect("properties object") {
                                 let is_required = req_list.as_ref().is_some_and(|r| r.contains(pk));
@@ -310,7 +323,10 @@ fn every_operation_has_summary_operationid_and_error_envelope() {
             operations += 1;
             assert!(!op["operationId"].as_str().unwrap_or_default().is_empty(), "{method} {path}");
             assert!(!op["summary"].as_str().unwrap_or_default().is_empty(), "{method} {path}");
-            assert!(op["responses"].as_object().expect("responses").contains_key("4XX"), "{method} {path}");
+            assert!(
+                op["responses"].as_object().expect("responses").contains_key("4XX"),
+                "{method} {path}"
+            );
             // سطح امنیت یا در سند است یا عمومی است — ادمین‌ها باید security داشته باشند
             let tag = op["tags"][0].as_str().expect("tag");
             assert!(!tag.is_empty());

@@ -5,7 +5,6 @@
 //! را رعایت می‌کند: نتیجه‌ها Result هستند، کد خطای وایر عیناً عبور می‌کند و
 //! بدنه‌های خراب به `MALFORMED_ERROR_BODY`/`RESPONSE_MISMATCH` نگاشت می‌شوند.
 
-
 // تست‌ها جای مشروع expect هستند — ورودی گلدن باید شکست صریح بدهد
 #![allow(clippy::expect_used)]
 
@@ -21,7 +20,9 @@ use tower::ServiceExt;
 use dropagentx_contracts::accounts::BalanceResponse;
 use dropagentx_contracts::common::{ErrorEnvelope, EscrowStatus};
 use dropagentx_contracts::escrows::EscrowListResponse;
-use dropagentx_contracts::openapi::{build_openapi_doc_inlined, fastify_path, ApiRouteDef, Method, OpenApiInfo, Security};
+use dropagentx_contracts::openapi::{
+    build_openapi_doc_inlined, fastify_path, ApiRouteDef, Method, OpenApiInfo, Security,
+};
 use dropagentx_contracts::system::HealthResponse;
 use dropagentx_contracts::wallet::{MintRequest, WalletMoveResponse};
 use dropagentx_contracts::{BalanceResponse as BR, EconomySummary};
@@ -34,12 +35,16 @@ fn test_router() -> Router {
     async fn mint(Json(req): Json<MintRequest>) -> Json<Value> {
         // هندلر «سرور Rust» — قرارداد را parse کرد و تایپ‌شده جواب می‌دهد
         assert_eq!(req.amount.get(), 500);
-        Json(json!({ "txId": "tx_1", "accountId": req.account_id, "balance": 500, "replayed": false }))
+        Json(
+            json!({ "txId": "tx_1", "accountId": req.account_id, "balance": 500, "replayed": false }),
+        )
     }
     async fn balance(axum::extract::Path(id): axum::extract::Path<String>) -> Json<Value> {
         Json(json!({ "accountId": id, "balance": 7 }))
     }
-    async fn escrows(axum::extract::Query(q): axum::extract::Query<std::collections::HashMap<String, String>>) -> Json<Value> {
+    async fn escrows(
+        axum::extract::Query(q): axum::extract::Query<std::collections::HashMap<String, String>>,
+    ) -> Json<Value> {
         // status باید همان رشتهٔ معتبر وایر باشد
         assert_eq!(q.get("status").map(String::as_str), Some("FUNDED"));
         Json(json!({ "items": [] }))
@@ -63,7 +68,9 @@ fn test_router() -> Router {
     async fn overdraft() -> (StatusCode, Json<Value>) {
         (
             StatusCode::UNPROCESSABLE_ENTITY,
-            Json(json!({ "error": { "code": "ACCOUNT_OVERDRAFT", "message": "no funds", "meta": { "needed": 90 } } })),
+            Json(
+                json!({ "error": { "code": "ACCOUNT_OVERDRAFT", "message": "no funds", "meta": { "needed": 90 } } }),
+            ),
         )
     }
     async fn gateway_banner() -> (StatusCode, &'static str) {
@@ -85,7 +92,13 @@ fn test_router() -> Router {
 #[derive(Debug)]
 enum WireFailure {
     /// خطای وایر با کد عیناً از سرور
-    Server { code: String, #[allow(dead_code)] message: String, status: u16, meta: Option<Value> },
+    Server {
+        code: String,
+        #[allow(dead_code)]
+        message: String,
+        status: u16,
+        meta: Option<Value>,
+    },
     /// بدنهٔ خطا JSON نبود (بنر گیت‌وی و…)
     MalformedErrorBody { status: u16 },
     /// پاسخ 2xx قرارداد را نقض کرد
@@ -107,7 +120,13 @@ fn parse_wire<T: DeserializeOwned>(status: u16, body: &[u8]) -> Result<T, WireFa
     serde_json::from_slice::<T>(body).map_err(|_| WireFailure::ResponseMismatch { status })
 }
 
-async fn call(app: &Router, method: &str, uri: &str, body: Option<Value>, with_admin: bool) -> (u16, Vec<u8>) {
+async fn call(
+    app: &Router,
+    method: &str,
+    uri: &str,
+    body: Option<Value>,
+    with_admin: bool,
+) -> (u16, Vec<u8>) {
     let mut builder = Request::builder().method(method).uri(uri);
     if body.is_some() {
         builder = builder.header("content-type", "application/json");
@@ -143,7 +162,10 @@ async fn sends_typed_json_bodies_with_caller_headers_and_parses_typed_responses(
     assert_eq!(parsed.balance, 500);
     assert!(!parsed.replayed);
     // قرارداد بدنهٔ ورودی را هم به‌سختی رد می‌کند — کلید کوتاه باید رد شود
-    assert!(serde_json::from_value::<MintRequest>(json!({ "accountId": "user:ali", "amount": 500, "idempotencyKey": "esc-1" })).is_err());
+    assert!(serde_json::from_value::<MintRequest>(
+        json!({ "accountId": "user:ali", "amount": 500, "idempotencyKey": "esc-1" })
+    )
+    .is_err());
 }
 
 #[tokio::test]
@@ -205,7 +227,8 @@ async fn url_encodes_path_parameters_while_preserving_route_shape() {
     // مشتری قبل از ارسال encode می‌کند — مثل fillPath در client.ts
     let encoded = urlenc("user:ali");
     assert_eq!(encoded, "user%3Aali");
-    let (status, body) = call(&app, "GET", &format!("/accounts/{encoded}/balance"), None, false).await;
+    let (status, body) =
+        call(&app, "GET", &format!("/accounts/{encoded}/balance"), None, false).await;
     assert_eq!(status, 200);
     let parsed: BalanceResponse = serde_json::from_slice(&body).expect("typed balance");
     assert_eq!(parsed.account_id, "user:ali");
@@ -317,16 +340,17 @@ fn builds_a_valid_31_doc_with_paths_params_request_body_and_security() {
     ];
     let doc = build_openapi_doc_inlined(
         &routes,
-        &OpenApiInfo { title: "DropAgentX v3 API".into(), version: "0.2.0".into(), description: "test".into() },
+        &OpenApiInfo {
+            title: "DropAgentX v3 API".into(),
+            version: "0.2.0".into(),
+            description: "test".into(),
+        },
     );
 
     assert_eq!(doc["openapi"], json!("3.1.0"));
     let mut paths: Vec<&String> = doc["paths"].as_object().expect("paths").keys().collect();
     paths.sort();
-    assert_eq!(
-        paths,
-        vec!["/economy", "/escrows/{id}", "/health", "/wallet/mint"]
-    );
+    assert_eq!(paths, vec!["/economy", "/escrows/{id}", "/health", "/wallet/mint"]);
 
     let escrow = &doc["paths"]["/escrows/{id}"]["get"];
     let params = escrow["parameters"].as_array().expect("parameters");
@@ -353,15 +377,22 @@ fn builds_a_valid_31_doc_with_paths_params_request_body_and_security() {
 
 #[test]
 fn emits_json_schema_that_accepts_valid_payloads_and_rejects_invalid_ones() {
-    let doc = build_openapi_doc_inlined(&dropagentx_contracts::routes::api_routes(), &dropagentx_contracts::openapi_info());
+    let doc = build_openapi_doc_inlined(
+        &dropagentx_contracts::routes::api_routes(),
+        &dropagentx_contracts::openapi_info(),
+    );
     // اسکیمای پاسخ economy باید circulatingSupply را داشته باشد (تست TS)
-    let schema = &doc["paths"]["/economy"]["get"]["responses"]["200"]["content"]["application/json"]["schema"];
+    let schema = &doc["paths"]["/economy"]["get"]["responses"]["200"]["content"]
+        ["application/json"]["schema"];
     assert!(schema["properties"]["circulatingSupply"].is_object());
     assert_eq!(schema["properties"]["circulatingSupply"]["type"], json!("integer"));
     // و اسکیمای بدنهٔ mint مرز امن 2^53−1 را دارد
-    let mint_body = &doc["paths"]["/wallet/mint"]["post"]["requestBody"]["content"]["application/json"]["schema"];
+    let mint_body = &doc["paths"]["/wallet/mint"]["post"]["requestBody"]["content"]
+        ["application/json"]["schema"];
     assert_eq!(mint_body["properties"]["amount"]["maximum"], json!(9_007_199_254_740_991_i64));
     assert_eq!(mint_body["properties"]["amount"]["minimum"], json!(0_i64));
     // برای معادل «rejects invalid»: نمونهٔ نامعتبر باید در تایپ Rust رد شود
-    assert!(serde_json::from_value::<BR>(json!({ "accountId": "user:ali", "balance": -1 })).is_err());
+    assert!(
+        serde_json::from_value::<BR>(json!({ "accountId": "user:ali", "balance": -1 })).is_err()
+    );
 }

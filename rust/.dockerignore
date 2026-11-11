@@ -1,0 +1,13 @@
+# بیلد سبک — فقط manifestها و کد به builder می‌روند
+# توجه: الگوهای پوشه دقیق‌اند تا crates/db حذف نشود
+/target
+/.git
+/.github
+/front
+/docs
+/scripts
+/backups
+/*.db
+README*
+Dockerfile
+.dockerignore

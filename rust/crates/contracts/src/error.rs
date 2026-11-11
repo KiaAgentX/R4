@@ -5,8 +5,8 @@
 //! ۴۲۹ (نرخ)، ۵۰۱/۵۰۲/۵۰۳ (زیرساخت). بدنهٔ همیشگی: `{ error: { code, message, meta? } }`.
 //! کدها additive-only هستند — کلاینت‌های قدیمی نمی‌شکنند.
 
-use dropagentx_domain::{DomainError, DomainErrorCode};
 use crate::common::{ApiError, ErrorEnvelope, Meta, MetaValue};
+use dropagentx_domain::{DomainError, DomainErrorCode};
 
 // ── مجموعه‌های نگاشت — یک‌به‌یک با errors.ts ────────────────────────────────
 
@@ -98,7 +98,11 @@ impl HttpFailure {
     /// پیشوند رزرو‌شدهٔ سیستم.
     #[must_use]
     pub fn reserved_id() -> Self {
-        Self::new(422, "RESERVED_ID", "The mint:/treasury:/burn:/escrow: prefixes are system-reserved.")
+        Self::new(
+            422,
+            "RESERVED_ID",
+            "The mint:/treasury:/burn:/escrow: prefixes are system-reserved.",
+        )
     }
 
     /// حساب تکراری (نقض UNIQUE).
@@ -229,7 +233,9 @@ impl HttpFailure {
     #[must_use]
     pub fn to_api_error(&self) -> ApiError {
         match &self.meta {
-            Some(meta) => ApiError::with_meta(self.code.clone(), self.message.clone(), meta.clone()),
+            Some(meta) => {
+                ApiError::with_meta(self.code.clone(), self.message.clone(), meta.clone())
+            }
             None => ApiError::new(self.code.clone(), self.message.clone()),
         }
     }
@@ -303,13 +309,26 @@ mod tests {
     fn full_taxonomy_covers_every_domain_code() {
         // هر ۲۰ کد دامنه باید یکی از سه وضعیت 404/422/500 بگیرد — هیچ کدی نگاشت‌نیافته نمی‌ماند
         for code in [
-            Code::NonIntegerAmount, Code::NegativeAmount, Code::AmountOutOfRange,
-            Code::BpsOutOfRange, Code::TooFewPostings, Code::UnbalancedTransaction,
-            Code::UnknownAccount, Code::InvalidAccountKind, Code::DuplicateAccount,
-            Code::AccountOverdraft, Code::InvalidTransition, Code::EscrowNotFound,
-            Code::EscrowAlreadyExists, Code::RequiresHumanApproval, Code::MintCapExceeded,
-            Code::HitlNotFound, Code::HitlNotRequired, Code::HitlAlreadyDecided,
-            Code::HitlExpired, Code::ProductNotFound,
+            Code::NonIntegerAmount,
+            Code::NegativeAmount,
+            Code::AmountOutOfRange,
+            Code::BpsOutOfRange,
+            Code::TooFewPostings,
+            Code::UnbalancedTransaction,
+            Code::UnknownAccount,
+            Code::InvalidAccountKind,
+            Code::DuplicateAccount,
+            Code::AccountOverdraft,
+            Code::InvalidTransition,
+            Code::EscrowNotFound,
+            Code::EscrowAlreadyExists,
+            Code::RequiresHumanApproval,
+            Code::MintCapExceeded,
+            Code::HitlNotFound,
+            Code::HitlNotRequired,
+            Code::HitlAlreadyDecided,
+            Code::HitlExpired,
+            Code::ProductNotFound,
         ] {
             let s = status_for_domain_code(code);
             assert!([404, 422, 500].contains(&s), "{code:?} → {s}");
@@ -318,10 +337,12 @@ mod tests {
 
     #[test]
     fn domain_failure_envelope_carries_code_message_meta() {
-        let err = DomainError::new(Code::AccountOverdraft, "no funds")
-            .with_meta("needed", 90_i64);
+        let err = DomainError::new(Code::AccountOverdraft, "no funds").with_meta("needed", 90_i64);
         let env = DomainFailure::new(err).to_envelope();
-        assert_eq!(to_string(&env).unwrap(), r#"{"error":{"code":"ACCOUNT_OVERDRAFT","message":"no funds","meta":{"needed":90}}}"#);
+        assert_eq!(
+            to_string(&env).unwrap(),
+            r#"{"error":{"code":"ACCOUNT_OVERDRAFT","message":"no funds","meta":{"needed":90}}}"#
+        );
     }
 
     #[test]
@@ -329,7 +350,10 @@ mod tests {
         let f = HttpFailure::rate_limited(120);
         assert_eq!(f.status, 429);
         assert_eq!(f.code, "RATE_LIMITED");
-        assert_eq!(to_string(&f.to_envelope()).unwrap(), r#"{"error":{"code":"RATE_LIMITED","message":"More than 120 requests per minute.","meta":{"limit":120}}}"#);
+        assert_eq!(
+            to_string(&f.to_envelope()).unwrap(),
+            r#"{"error":{"code":"RATE_LIMITED","message":"More than 120 requests per minute.","meta":{"limit":120}}}"#
+        );
     }
 
     #[test]

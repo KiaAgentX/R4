@@ -25,6 +25,7 @@ pub mod legacy;
 pub mod migrate;
 pub mod outbox;
 pub mod proof;
+pub mod queries;
 pub mod store;
 pub mod wire;
 
@@ -51,6 +52,11 @@ pub use store::{
     RecentPosting, V3Store,
 };
 pub use wire::{event_kind, event_payload};
+
+// فاز ۴ — کوئری‌های صف HITL، محصولات داشبورد، audit و بکاپ
+pub use queries::{
+    deliver_order, AuditRowRead, BackupInfo, HitlDecision, HitlRow, ProductFilter, ProductRow,
+};
 
 #[cfg(test)]
 mod tests {

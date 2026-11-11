@@ -36,6 +36,8 @@ const BUSY_TIMEOUT: Duration = Duration::from_secs(10);
 #[derive(Debug, Clone)]
 pub struct V3Store {
     pool: SqlitePool,
+    /// مسیر فایل دیتابیس — `None` یعنی درون‌حافظه‌ای (بکاپ VACUUM INTO اعمال نمی‌شود).
+    file_path: Option<String>,
 }
 
 /// خروجی closure دامنه — همان `CommandOutcome` در TS.
@@ -471,7 +473,9 @@ pub(crate) async fn insert_audit(
     Ok(())
 }
 
-async fn persist_outcome(
+/// درج خروجی یک فرمان دامنه داخل تراکنش باز — در فاز ۴ مسیر تصمیم HITL
+/// («تأیید ⇒ تسویه در همان تراکنش») هم از همین نقطهٔ واحد عبور می‌کند.
+pub(crate) async fn persist_outcome(
     exec: &mut SqliteConnection,
     opts: &ApplyOptions,
     outcome: &CommandOutcome,
@@ -517,7 +521,8 @@ impl V3Store {
         // ::memory: با چند اتصال = چند دیتابیس جدا؛ تک‌اتصال می‌گذاریم.
         let max = if in_memory { 1 } else { 4 };
         let pool = SqlitePoolOptions::new().max_connections(max).connect_with(opts).await?;
-        Ok(Self { pool })
+        let file_path = if in_memory { None } else { Some(normalized.to_owned()) };
+        Ok(Self { pool, file_path })
     }
 
     /// فروشگاه درون‌حافظه‌ای — برای تست‌ها.
@@ -537,7 +542,14 @@ impl V3Store {
         let opts =
             SqliteConnectOptions::new().filename(file).read_only(true).busy_timeout(BUSY_TIMEOUT);
         let pool = SqlitePoolOptions::new().max_connections(1).connect_with(opts).await?;
-        Ok(Self { pool })
+        Ok(Self { pool, file_path: Some(file.to_owned()) })
+    }
+
+    /// آیا این فروشگاه روی فایل است؟ — بکاپ `VACUUM INTO` فقط برای فروشگاه
+    /// فایل‌محور معنا دارد (`BACKUP_UNSUPPORTED` برای درون‌حافظه‌ای).
+    #[must_use]
+    pub fn file_path(&self) -> Option<&str> {
+        self.file_path.as_deref()
     }
 
     /// مهاجرت‌های نسخه‌دار اسکیما — `migrations/0001_init.sql` (idempotent؛

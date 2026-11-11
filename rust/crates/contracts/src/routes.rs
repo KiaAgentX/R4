@@ -7,33 +7,31 @@
 
 use utoipa::PartialSchema;
 
+use crate::accounts::{AccountListResponse, AccountView, BalanceResponse, CreateAccountRequest};
 use crate::ai::{
     AiAgentsListResponse, AiChatRequest, AiChatResponse, AiSkillsListResponse, AiUsageView,
 };
 use crate::common::{DIN_MAX, ID_PATTERN};
 use crate::dashboard::{
     ApprovalDecisionRequest, ApprovalDecisionResponse, ApprovalListResponse, BrandResponse,
-    DashUserListResponse, DashWalletListResponse, CreateProductRequest, OrderActionRequest,
+    CreateProductRequest, DashUserListResponse, DashWalletListResponse, OrderActionRequest,
     OrderActionResponse, OrderListResponse, OverviewResponse, ProductListResponse,
     ProductMutationResponse, SecurityResponse, SettingsListResponse, SettingsPutRequest,
     UpdateProductRequest,
 };
+use crate::economy::EconomySummary;
 use crate::escrows::{
     CancelEscrowRequest, CreateEscrowRequest, DeliverEscrowRequest, DisputeEscrowRequest,
     EscrowActionResponse, EscrowListResponse, EscrowView, ExpireEscrowRequest, FundEscrowRequest,
     RefundEscrowRequest, ReleaseEscrowRequest,
 };
-use crate::economy::EconomySummary;
 use crate::hitl::{
-    CreateHitlRequest, HitlActionResponse, HitlDecisionRequest, HitlListResponse, HitlSweepResponse,
-    HitlView,
+    CreateHitlRequest, HitlActionResponse, HitlDecisionRequest, HitlListResponse,
+    HitlSweepResponse, HitlView,
 };
 use crate::openapi::{ApiRouteDef, Method, Param, Security};
 use crate::system::{BackupCreated, HealthResponse};
 use crate::wallet::{BurnRequest, MintRequest, WalletMoveResponse};
-use crate::accounts::{
-    AccountListResponse, AccountView, BalanceResponse, CreateAccountRequest,
-};
 
 // ── سازنده‌های اسکیمای پارامتر — دقیقاً خروجی zod برای همان فیلد ─────────────
 
@@ -118,7 +116,14 @@ fn leaderboard_type_query() -> Param {
 #[must_use]
 pub fn api_routes() -> Vec<ApiRouteDef> {
     let escrow_status_values: &[&str] = &[
-        "CREATED", "FUNDED", "DELIVERED", "RELEASED", "DISPUTED", "REFUNDED", "CANCELLED", "EXPIRED",
+        "CREATED",
+        "FUNDED",
+        "DELIVERED",
+        "RELEASED",
+        "DISPUTED",
+        "REFUNDED",
+        "CANCELLED",
+        "EXPIRED",
     ];
     let hitl_status_values: &[&str] = &["PENDING", "APPROVED", "REJECTED", "EXPIRED"];
 

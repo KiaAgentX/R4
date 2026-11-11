@@ -20,6 +20,8 @@ thiserror = { workspace = true }
 tracing = { workspace = true }
 uuid = { workspace = true }
 chrono = { workspace = true }
+# فاز ۴ — کوئری‌های async بکاپ (tokio::fs برای VACUUM INTO + هرس)
+tokio = { workspace = true }
 
 [dev-dependencies]
 # #[tokio::test] برای تست‌های یکپارچگی

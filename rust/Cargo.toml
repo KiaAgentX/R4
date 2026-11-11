@@ -50,9 +50,9 @@ utoipa = { version = "5.3", features = ["axum_extras"] }
 # error model یکدست: thiserror در کتابخانه‌ها، anyhow فقط در باینری‌ها
 thiserror = "2.0"
 anyhow = "1.0"
-# observability
+# observability — فاز ۴: فرمت JSON برای لاگ‌های سرور (همان شکل فعلی)
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 # llm client
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
 # crypto / wallet
@@ -70,4 +70,5 @@ uuid = { version = "1.16", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 # ---------- کرِیت‌های داخلی — فقط با path، نسخه از همین‌جا ----------
 dropagentx-domain = { path = "crates/domain" }
+dropagentx-contracts = { path = "crates/contracts" }
 dropagentx-db = { path = "crates/db" }

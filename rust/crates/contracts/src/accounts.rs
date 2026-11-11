@@ -70,7 +70,8 @@ mod tests {
     fn create_account_request_omits_absent_label() {
         let req = CreateAccountRequest { id: Id::new("user:tg:1").unwrap(), label: None };
         assert_eq!(to_string(&req).unwrap(), r#"{"id":"user:tg:1"}"#);
-        let req2 = CreateAccountRequest { id: Id::new("user:tg:1").unwrap(), label: Some("Ali".into()) };
+        let req2 =
+            CreateAccountRequest { id: Id::new("user:tg:1").unwrap(), label: Some("Ali".into()) };
         assert_eq!(to_string(&req2).unwrap(), r#"{"id":"user:tg:1","label":"Ali"}"#);
     }
 }

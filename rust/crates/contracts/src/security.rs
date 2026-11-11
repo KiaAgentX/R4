@@ -73,11 +73,8 @@ pub fn verify_telegram_init_data(init_data: &str, bot_token: &str) -> Option<Tel
     let hash = params.remove(hash_pos).1;
 
     params.sort_by(|a, b| a.0.cmp(&b.0));
-    let data_check_string = params
-        .iter()
-        .map(|(k, v)| format!("{k}={v}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let data_check_string =
+        params.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join("\n");
 
     let mut secret = Sha256::digest(bot_token.as_bytes());
     // SHA256 همیشه ۳۲ بایت است — کلید معتبر HMAC؛ با فراخوانی داخلی امن
@@ -104,9 +101,7 @@ pub fn verify_telegram_init_data(init_data: &str, bot_token: &str) -> Option<Tel
     if !id.is_finite() || id < 0.0 || id.fract() != 0.0 || id > 9_007_199_254_740_991.0 {
         return None;
     }
-    let username = user
-        .username
-        .filter(|u| !u.is_empty());
+    let username = user.username.filter(|u| !u.is_empty());
     Some(TelegramIdentity { user_id: format!("{}", id as i64), username })
 }
 
@@ -117,26 +112,18 @@ pub fn make_test_init_data(bot_token: &str, user: &str, username: Option<&str>) 
         Some(u) => format!(r#"{{"id":{user},"username":"{u}"}}"#),
         None => format!(r#"{{"id":{user}}}"#),
     };
-    let mut params: Vec<(String, String)> = vec![
-        ("user".into(), user_json),
-        ("auth_date".into(), "1700000000".into()),
-    ];
+    let mut params: Vec<(String, String)> =
+        vec![("user".into(), user_json), ("auth_date".into(), "1700000000".into())];
     params.sort_by(|a, b| a.0.cmp(&b.0));
-    let data_check_string = params
-        .iter()
-        .map(|(k, v)| format!("{k}={v}"))
-        .collect::<Vec<_>>()
-        .join("\n");
+    let data_check_string =
+        params.iter().map(|(k, v)| format!("{k}={v}")).collect::<Vec<_>>().join("\n");
     let secret = Sha256::digest(bot_token.as_bytes());
     let mut mac = Hmac::<Sha256>::new_from_slice(&secret)
         .unwrap_or_else(|_| unreachable!("SHA256 digest is always a valid HMAC key length"));
     mac.update(data_check_string.as_bytes());
     let hash = hex::encode(mac.finalize().into_bytes());
-    let pairs = params
-        .iter()
-        .map(|(k, v)| format!("{k}={}", urlencode(v)))
-        .collect::<Vec<_>>()
-        .join("&");
+    let pairs =
+        params.iter().map(|(k, v)| format!("{k}={}", urlencode(v))).collect::<Vec<_>>().join("&");
     format!("{pairs}&hash={hash}")
 }
 
@@ -145,7 +132,18 @@ fn urlencode(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     for b in s.bytes() {
         match b {
-            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'*' | b'{' | b'}' | b'"' | b':' | b',' => {
+            b'A'..=b'Z'
+            | b'a'..=b'z'
+            | b'0'..=b'9'
+            | b'-'
+            | b'_'
+            | b'.'
+            | b'*'
+            | b'{'
+            | b'}'
+            | b'"'
+            | b':'
+            | b',' => {
                 out.push(b as char);
             }
             _ => out.push_str(&format!("%{b:02X}")),

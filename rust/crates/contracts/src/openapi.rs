@@ -14,9 +14,9 @@
 //! * zod `const` → utoipa `enum` تک‌عضوی (یا `boolean` برای literal true).
 
 use serde_json::{json, Map, Value};
-use utoipa::PartialSchema;
-use utoipa::openapi::RefOr;
 use utoipa::openapi::schema::Schema;
+use utoipa::openapi::RefOr;
+use utoipa::PartialSchema;
 
 /// فعل HTTP — پورت `HttpMethod`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -170,9 +170,8 @@ pub fn build_openapi_doc(routes: &[ApiRouteDef], info: &OpenApiInfo) -> Value {
     let mut tags: Vec<Value> = Vec::new();
 
     for route in routes {
-        let entry = paths
-            .entry(route.path.to_string())
-            .or_insert_with(|| Value::Object(Map::new()));
+        let entry =
+            paths.entry(route.path.to_string()).or_insert_with(|| Value::Object(Map::new()));
 
         // پارامترها — path و query به ترتیب تعریف
         let parameters: Vec<Value> = route
@@ -196,10 +195,13 @@ pub fn build_openapi_doc(routes: &[ApiRouteDef], info: &OpenApiInfo) -> Value {
                 "content": { "application/json": { "schema": to_value(&route.response) } },
             }),
         );
-        responses.insert("4XX".to_string(), json!({
-            "description": "Domain or validation failure",
-            "content": { "application/json": { "schema": error_4xx_schema() } },
-        }));
+        responses.insert(
+            "4XX".to_string(),
+            json!({
+                "description": "Domain or validation failure",
+                "content": { "application/json": { "schema": error_4xx_schema() } },
+            }),
+        );
 
         let mut operation = Map::new();
         operation.insert("operationId".into(), json!(route.operation_id));
@@ -284,10 +286,12 @@ pub(crate) fn component_schemas() -> Vec<(&'static str, RefOr<Schema>)> {
     };
     use crate::ai::{
         AiAgentName, AiAgentView, AiAgentsListResponse, AiChatRequest, AiChatResponse, AiChatRole,
-        AiSkillKind, AiSkillView, AiSkillsListResponse, AiToolTrace, AiUsage, AiUsageView,
-        HistoryMessage, HistoryRole, AiVia,
+        AiSkillKind, AiSkillView, AiSkillsListResponse, AiToolTrace, AiUsage, AiUsageView, AiVia,
+        HistoryMessage, HistoryRole,
     };
-    use crate::common::{ApiError, Din, ErrorEnvelope, EscrowStatus, Id, IdempotencyKey, IsoDateTime, MetaValue};
+    use crate::common::{
+        ApiError, Din, ErrorEnvelope, EscrowStatus, Id, IdempotencyKey, IsoDateTime, MetaValue,
+    };
     use crate::dashboard::*;
     use crate::economy::{Currency, DinSymbol, EconomySummary};
     use crate::escrows::*;
@@ -297,13 +301,16 @@ pub(crate) fn component_schemas() -> Vec<(&'static str, RefOr<Schema>)> {
 
     vec![
         // primitive with annotations — utoipa برای i64 حاشیه‌نویسی‌شده ref می‌سازد
-        ("i64", utoipa::openapi::schema::Object::builder()
-            .schema_type(utoipa::openapi::schema::Type::Integer)
-            .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
-                utoipa::openapi::KnownFormat::Int64,
-            )))
-            .build()
-            .into()),
+        (
+            "i64",
+            utoipa::openapi::schema::Object::builder()
+                .schema_type(utoipa::openapi::schema::Type::Integer)
+                .format(Some(utoipa::openapi::schema::SchemaFormat::KnownFormat(
+                    utoipa::openapi::KnownFormat::Int64,
+                )))
+                .build()
+                .into(),
+        ),
         // common
         ("Din", <Din as PartialSchema>::schema()),
         ("Id", <Id as PartialSchema>::schema()),
@@ -519,12 +526,11 @@ mod tests {
         assert_eq!(mint["security"], json!([{ "kiaAdminKey": [] }]));
         assert_eq!(mint["requestBody"]["required"], json!(true));
         assert!(mint["responses"]["201"]["description"] == json!("Success"));
-        assert!(mint["responses"]["4XX"]["content"]["application/json"]["schema"]["required"]
-            == json!(["error"]));
-        assert_eq!(
-            doc["components"]["securitySchemes"]["kiaAdminKey"]["name"],
-            json!("X-KIA-Key")
+        assert!(
+            mint["responses"]["4XX"]["content"]["application/json"]["schema"]["required"]
+                == json!(["error"])
         );
+        assert_eq!(doc["components"]["securitySchemes"]["kiaAdminKey"]["name"], json!("X-KIA-Key"));
     }
 
     #[test]

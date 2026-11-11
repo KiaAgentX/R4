@@ -745,8 +745,8 @@ pub struct AuditRow {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use serde_json::{from_str, to_string};
     use serde_json::json;
+    use serde_json::{from_str, to_string};
 
     #[test]
     fn envelope_ok_literal_roundtrips() {
