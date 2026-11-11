@@ -57,6 +57,30 @@ pub struct HitlRow {
 }
 
 /// خروجی تصمیم HITL — درخواست به‌روزشده + حاصل تسویه (فقط برای APPROVE).
+/// ردیف مصرف AI برای جدول `AiUsage` (فاز ۶).
+#[derive(Debug, Clone)]
+pub struct AiUsageRow {
+    /// کاربر (`user:tg:<id>`)
+    pub user_id: String,
+    /// ایجنت (`orchestrator`)
+    pub agent: String,
+    /// ارائه‌دهنده
+    pub provider: String,
+    /// مدل
+    pub model: String,
+    /// نوع سیکل (`chat`)
+    pub kind: String,
+    /// توکن ورودی
+    pub prompt_tokens: i64,
+    /// توکن خروجی
+    pub completion_tokens: i64,
+    /// مجموع
+    pub total_tokens: i64,
+    /// نتیجهٔ ممیزی (`ai.ok|refused|failed|pending`)
+    pub outcome: String,
+}
+
+/// خروجی تصمیم HITL — درخواست به‌روزرسانی + حاصل تسویه (فقط برای APPROVE).
 #[derive(Debug, Clone)]
 pub struct HitlDecision {
     /// درخواست پس از تصمیم
@@ -649,6 +673,72 @@ impl V3Store {
         let mut tx = self.pool_ref().begin().await?;
         insert_audit(&mut tx, actor, action, target, meta).await?;
         tx.commit().await?;
+        Ok(())
+    }
+
+    /// درج ردیف مصرف AI — بعد از هر فراخوانی (مبنای گیت سقف روزانهٔ فاز ۶).
+    ///
+    /// # Errors
+    /// خطای SQL.
+    pub async fn insert_ai_usage(&self, r: &AiUsageRow) -> DbResult<()> {
+        sqlx::query(
+            r#"INSERT INTO "AiUsage" ("id","userId","agent","provider","model","kind","promptTokens","completionTokens","totalTokens","outcome","at")
+               VALUES (?,?,?,?,?,?,?,?,?,?,?)"#,
+        )
+        .bind(format!("aiuse:{}", uuid::Uuid::now_v7()))
+        .bind(&r.user_id)
+        .bind(&r.agent)
+        .bind(&r.provider)
+        .bind(&r.model)
+        .bind(&r.kind)
+        .bind(r.prompt_tokens)
+        .bind(r.completion_tokens)
+        .bind(r.total_tokens)
+        .bind(&r.outcome)
+        .bind(now_iso())
+        .execute(self.pool_ref())
+        .await?;
+        Ok(())
+    }
+
+    /// جست‌وجوی پایگاه دانش — LIKE روی عنوان/بدنه (مهارت `kb.search` فاز ۶).
+    ///
+    /// # Errors
+    /// خطای SQL.
+    pub async fn search_kb(&self, q: &str, limit: i64) -> DbResult<Vec<(String, String, String)>> {
+        let pattern = format!("%{q}%");
+        let rows = sqlx::query(
+            r#"SELECT "id","title","body" FROM "KbEntry"
+               WHERE "title" LIKE ? OR "body" LIKE ?
+               ORDER BY "updatedAt" DESC LIMIT ?"#,
+        )
+        .bind(&pattern)
+        .bind(&pattern)
+        .bind(limit)
+        .fetch_all(self.pool_ref())
+        .await?;
+        use sqlx::Row;
+        Ok(rows.into_iter().map(|r| (r.get("id"), r.get("title"), r.get("body"))).collect())
+    }
+
+    /// درج/به‌روزرسانی مدخل دانش — مهارت `kb.upsert` (فقط staff).
+    ///
+    /// # Errors
+    /// خطای SQL.
+    pub async fn upsert_kb(&self, id: &str, title: &str, body: &str) -> DbResult<()> {
+        let now = now_iso();
+        sqlx::query(
+            r#"INSERT INTO "KbEntry" ("id","title","body","createdAt","updatedAt")
+               VALUES (?,?,?,?,?)
+               ON CONFLICT("id") DO UPDATE SET "title"=excluded."title", "body"=excluded."body", "updatedAt"=excluded."updatedAt""#,
+        )
+        .bind(id)
+        .bind(title)
+        .bind(body)
+        .bind(&now)
+        .bind(&now)
+        .execute(self.pool_ref())
+        .await?;
         Ok(())
     }
 

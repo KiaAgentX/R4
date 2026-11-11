@@ -13,7 +13,7 @@ use dropagentx_contracts::{
     AiChatRole, AiSkillsListResponse, AiUsageView, HttpFailure,
 };
 
-use crate::error::ApiResult;
+use crate::error::{ApiFailure, ApiResult};
 use crate::middleware::require_admin;
 use crate::state::{kia_os_skills, zenovix_agents, AppState};
 
@@ -56,12 +56,15 @@ pub async fn usage(
     }))
 }
 
-/// `POST /ai/chat` — گیت‌های هویت به همان ترتیب TS:
+/// `POST /ai/chat` — گیت‌های هویت به همان ترتیب TS + موتور فاز ۶:
 ///
 /// ۱. `role: staff` بدون کلید ادمین معتبر → 401 `UNAUTHORIZED`
 /// ۲. تماس‌گیرندهٔ بدون کلید: توکن بات تنظیم‌نشده → 503 `AI_IDENTITY_DISABLED`؛
 ///    initData غایب/نامعتبر → 401 `AI_IDENTITY_REQUIRED` — هویت هرگز از بدنه.
-/// ۳. سیکل AI کانفیگ نشده → 503 `AI_DISABLED` (ADR-006 همه‌یا-هیچ در بوت).
+/// ۳. گیت‌وی AI نصب‌نشده → 503 `AI_DISABLED` (ADR-006 همه‌یا-هیچ در بوت).
+/// ۴. موتور: سقف روزانه → 429 `AI_CAP_EXCEEDED`؛ دو پاکت خراب → 502
+///    `AI_MALFORMED_PACKET`؛ همهٔ اسلات‌ها قطع → 502 `AI_UPSTREAM`.
+/// ۵. ممیزی هر پاسخ: `ai.ok|refused|failed|pending` در AuditLog.
 ///
 /// # Errors
 /// گیت‌های بالا؛ 400 بدنهٔ نامعتبر.
@@ -80,7 +83,7 @@ pub async fn chat(
         return Err(HttpFailure::unauthorized_staff().into());
     }
 
-    let _acting_account = if admin_ok {
+    let acting_account = if admin_ok {
         // تماس معتمد (بات/داشبورد) — userId بدنه معتبر است
         req.user_id.get().to_owned()
     } else {
@@ -97,17 +100,69 @@ pub async fn chat(
         }
     };
 
-    if state.config.llm.is_none() {
+    // گیت کانفیگ — gateway در بوت از اسلات‌های ADR-008 ساخته می‌شود
+    let Some(gateway) = state.ai_gateway.as_ref() else {
         return Err(HttpFailure::ai_disabled().into());
+    };
+
+    // فاز ۶ — موتور کامل: سقف، fallback، پاکت سخت، مجوز، redaction، usage
+    let ctx = dropagentx_ai::ToolCtx {
+        actor: acting_account.clone(),
+        staff: admin_ok && req.role == AiChatRole::Staff,
+    };
+    let tools = crate::ai_tools::AiTools::new(state.store.clone());
+    let outcome: dropagentx_ai::ChatOutcome =
+        gateway.chat(&tools, &ctx, &req).await.map_err(|e| -> ApiFailure {
+            match e {
+                dropagentx_ai::GateError::CapExceeded { used, cap } => {
+                    HttpFailure::ai_cap_exceeded(used, cap).into()
+                }
+                dropagentx_ai::GateError::MalformedPacket { count } => {
+                    let _ = count;
+                    HttpFailure::ai_malformed_packet().into()
+                }
+                dropagentx_ai::GateError::AllSlotsFailed { attempts } => {
+                    tracing::warn!(attempts, "all AI slots failed");
+                    HttpFailure::ai_upstream(
+                        "AI_UPSTREAM",
+                        "Every LLM slot failed — see server logs.",
+                    )
+                    .into()
+                }
+                dropagentx_ai::GateError::Backend(detail) => {
+                    tracing::error!(detail, "AI backend failure");
+                    HttpFailure::internal("AI tool backend failed.").into()
+                }
+                dropagentx_ai::GateError::EmptyRequest => HttpFailure::invalid_request(1).into(),
+            }
+        })?;
+
+    // ممیزی هر پاسخ — چهار وضعیت ADR با زمینهٔ کامل (بدون متن کاربر)
+    let agent = outcome.response.agent.as_str();
+    let meta = format!(
+        r#"{{"provider":"{}","model":{},"totalTokens":{},"redactions":{},"pending":{},"tools":{}}}"#,
+        outcome.response.provider,
+        serde_json::to_string(&outcome.response.usage.model).unwrap_or_default(),
+        outcome.response.usage.total_tokens,
+        outcome.response.redactions,
+        outcome.response.pending_approval,
+        serde_json::to_string(
+            &outcome
+                .response
+                .tool_traces
+                .iter()
+                .map(|t| (t.skill.as_str(), t.ok))
+                .collect::<Vec<_>>()
+        )
+        .unwrap_or_default(),
+    );
+    if let Err(e) = state
+        .store
+        .audit_ext(&acting_account, outcome.audit.as_str(), Some(agent), Some(&meta))
+        .await
+    {
+        tracing::warn!(error = %e, "ai audit write failed");
     }
-    // فاز ۶: موتور روتینگ/مهارت/سقف/redaction روی همین گیت‌ها سیم می‌شود.
-    // تا آن‌روز پاسخ صادقانه — همان کد وایر `AI_DISABLED`، بدون ادعای نادرست.
-    Err(HttpFailure {
-        status: 503,
-        code: "AI_DISABLED".into(),
-        message: "The AI cycle is configured but the gateway engine ships in Phase 6 (ADR-009)."
-            .into(),
-        meta: None,
-    }
-    .into())
+
+    Ok(Json(outcome.response))
 }

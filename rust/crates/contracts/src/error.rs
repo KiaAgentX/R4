@@ -117,6 +117,12 @@ impl HttpFailure {
         Self::new(503, "DB_DOWN", "The server cannot reach its database.")
     }
 
+    /// خطای داخلی با جزئیات صادقانه (فاز ۶ — شکست backend مهارت‌های AI).
+    #[must_use]
+    pub fn internal(detail: impl std::fmt::Display) -> Self {
+        Self::new(500, "INTERNAL", format!("Internal error — {detail}"))
+    }
+
     /// بات غیرفعال — بدون `BOT_WEBHOOK_SECRET` (fail-closed فاز ۵، مثل admin).
     #[must_use]
     pub fn bot_disabled() -> Self {
@@ -185,6 +191,30 @@ impl HttpFailure {
     #[must_use]
     pub fn ai_upstream(code: impl Into<String>, message: impl Into<String>) -> Self {
         Self { status: 502, code: code.into(), message: message.into(), meta: None }
+    }
+
+    /// سقف روزانهٔ توکن AI تمام شده (فاز ۶) — گیت قبل از هر فراخوانی.
+    #[must_use]
+    pub fn ai_cap_exceeded(used: i64, cap: i64) -> Self {
+        let mut meta = Meta::new();
+        meta.insert("limit".into(), MetaValue::Int(cap));
+        meta.insert("used".into(), MetaValue::Int(used));
+        Self {
+            status: 429,
+            code: "AI_CAP_EXCEEDED".into(),
+            message: format!("Daily AI token cap exhausted ({used}/{cap})."),
+            meta: Some(meta),
+        }
+    }
+
+    /// LLM دو پاکت خراب پیاپی داد — شکست تایپ‌شده؛ متن خام هرگز عبور نمی‌کند.
+    #[must_use]
+    pub fn ai_malformed_packet() -> Self {
+        Self::new(
+            502,
+            "AI_MALFORMED_PACKET",
+            "LLM produced malformed packets twice — only {reply} or {tool,args} packets pass (ADR-009).",
+        )
     }
 
     /// محدودیت نرخ — meta حتماً `limit` دارد.

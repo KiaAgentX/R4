@@ -74,8 +74,12 @@ pub struct ServerConfig {
     pub admin_key: Option<String>,
     /// URL دیتابیس (SQLite واقعی v3).
     pub database_url: String,
-    /// سیکل AI — `None` یعنی غیرفعال (`AI_DISABLED` 503).
+    /// سیکل AI — `None` یعنی غیرفعال (`AI_DISABLED` 503). اسلات primary.
     pub llm: Option<LlmConfig>,
+    /// اسلات secondary ADR-008 — اختیاری؛ همه‌یا-هیچ روی سه‌تایی `_2`.
+    pub llm_2: Option<LlmConfig>,
+    /// اسلات fallback ADR-008 — اختیاری؛ همه‌یا-هیچ روی سه‌تایی `_3`.
+    pub llm_3: Option<LlmConfig>,
     /// توکن بات — هویت عمومی AI از initData مشتق می‌شود.
     pub bot_token: Option<String>,
     /// توکن مخفی وب‌هوک بات (`X-Telegram-Bot-Api-Secret-Token`) — `None` یعنی
@@ -111,6 +115,8 @@ impl Default for ServerConfig {
             admin_key: None,
             database_url: "file:./db/v3.db".into(),
             llm: None,
+            llm_2: None,
+            llm_3: None,
             bot_token: None,
             bot_webhook_secret: None,
             bot_admin_ids: Vec::new(),
@@ -162,7 +168,7 @@ impl ServerConfig {
             cfg.brand_tagline = v;
         }
 
-        // ADR-006 — همه‌یا-هیچ روی سه‌اسلات LLM
+        // ADR-006/008 — همه‌یا-هیچ روی هر سه‌تایی؛ اسلات‌های _2/_3 اختیاری‌اند
         let base = env_opt("OPENAI_BASE_URL");
         let key = env_opt("OPENAI_API_KEY");
         let model = env_opt("MODEL");
@@ -185,6 +191,9 @@ impl ServerConfig {
                 return Err(ConfigError::IncompleteLlm { missing });
             }
         }
+        // اسلات‌های secondary (_2) و fallback (_3) — همه‌یا-هیچ هرکدام (ADR-008)
+        cfg.llm_2 = parse_slot("2")?;
+        cfg.llm_3 = parse_slot("3")?;
 
         if let Some(v) = env_opt("HOST") {
             cfg.host = v;
@@ -216,6 +225,35 @@ impl ServerConfig {
     #[must_use]
     pub fn static_dir_exists(&self) -> bool {
         self.static_dir.as_ref().is_some_and(|p| p.is_dir())
+    }
+}
+
+/// خواندن اسلات اختیاری `_2`/`_3` — سه‌تایی همه‌یا-هیچ (ADR-008).
+///
+/// # Errors
+/// [`ConfigError::IncompleteLlm`] اگر یکی از سه متغیر `_2`/`_3` غایب باشد.
+fn parse_slot(suffix: &str) -> Result<Option<LlmConfig>, ConfigError> {
+    let base = env_opt(&format!("OPENAI_BASE_URL_{suffix}"));
+    let key = env_opt(&format!("OPENAI_API_KEY_{suffix}"));
+    let model = env_opt(&format!("MODEL_{suffix}"));
+    match (base, key, model) {
+        (Some(base_url), Some(api_key), Some(model)) => {
+            Ok(Some(LlmConfig { base_url, api_key, model }))
+        }
+        (None, None, None) => Ok(None),
+        (base, key, model) => {
+            let mut missing: Vec<&'static str> = Vec::new();
+            if base.is_none() {
+                missing.push(if suffix == "3" { "OPENAI_BASE_URL_3" } else { "OPENAI_BASE_URL_2" });
+            }
+            if key.is_none() {
+                missing.push(if suffix == "3" { "OPENAI_API_KEY_3" } else { "OPENAI_API_KEY_2" });
+            }
+            if model.is_none() {
+                missing.push(if suffix == "3" { "MODEL_3" } else { "MODEL_2" });
+            }
+            Err(ConfigError::IncompleteLlm { missing })
+        }
     }
 }
 

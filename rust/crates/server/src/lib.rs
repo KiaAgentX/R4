@@ -14,6 +14,7 @@
 //! نمی‌رسد سالم نیست.
 #![forbid(unsafe_code)]
 
+pub mod ai_tools;
 pub mod bot_env;
 pub mod config;
 pub mod error;

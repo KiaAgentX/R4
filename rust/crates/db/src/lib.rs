@@ -55,7 +55,8 @@ pub use wire::{event_kind, event_payload};
 
 // فاز ۴ — کوئری‌های صف HITL، محصولات داشبورد، audit و بکاپ
 pub use queries::{
-    deliver_order, AuditRowRead, BackupInfo, HitlDecision, HitlRow, ProductFilter, ProductRow,
+    deliver_order, AiUsageRow, AuditRowRead, BackupInfo, HitlDecision, HitlRow, ProductFilter,
+    ProductRow,
 };
 
 #[cfg(test)]

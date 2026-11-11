@@ -28,6 +28,8 @@ dropagentx-domain = { workspace = true }
 dropagentx-db = { workspace = true }
 # فاز ۵ — قلب خالص بات (orchestrator + DTOهای وایر) اینجا روی StoreEnv می‌نشیند
 dropagentx-bot = { workspace = true }
+# فاز ۶ — گیت‌وی AI خالص (slots/packet/redaction/engine) + backend مهارت‌ها
+dropagentx-ai = { workspace = true }
 
 [dev-dependencies]
 # oneshot (معادل app.inject فستیفای) — تست‌های سرور

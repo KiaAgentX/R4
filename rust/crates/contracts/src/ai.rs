@@ -29,6 +29,21 @@ pub enum AiAgentName {
     Content,
 }
 
+impl AiAgentName {
+    /// رشتهٔ وایر lowercase — برای audit/AiUsage (همان قالب serde).
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Orchestrator => "orchestrator",
+            Self::Receptionist => "receptionist",
+            Self::Sales => "sales",
+            Self::Support => "support",
+            Self::Analyst => "analyst",
+            Self::Content => "content",
+        }
+    }
+}
+
 /// نوع مجوز مهارت — `read/write/money/staff`.
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize, ToSchema,

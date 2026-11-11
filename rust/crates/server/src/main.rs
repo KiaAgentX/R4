@@ -42,10 +42,38 @@ async fn main() {
 
     let admin_state = config.admin_key.is_some();
     let llm_state = config.llm.as_ref().map(|c| c.model.clone());
+
+    // فاز ۶ — گیت‌وی AI از اسلات‌های ADR-008 (primary→secondary→fallback)
+    let mut slots: Vec<dropagentx_ai::AnyProvider> = Vec::new();
+    if let Some(cfg) = config.llm.as_ref() {
+        slots.push(dropagentx_ai::AnyProvider::OpenAi(dropagentx_ai::OpenAiProvider::new(
+            "primary",
+            cfg.base_url.clone(),
+            cfg.api_key.clone(),
+            cfg.model.clone(),
+        )));
+    }
+    if let Some(cfg) = config.llm_2.as_ref() {
+        slots.push(dropagentx_ai::AnyProvider::OpenAi(dropagentx_ai::OpenAiProvider::new(
+            "secondary",
+            cfg.base_url.clone(),
+            cfg.api_key.clone(),
+            cfg.model.clone(),
+        )));
+    }
+    if let Some(cfg) = config.llm_3.as_ref() {
+        slots.push(dropagentx_ai::AnyProvider::OpenAi(dropagentx_ai::OpenAiProvider::new(
+            "fallback",
+            cfg.base_url.clone(),
+            cfg.api_key.clone(),
+            cfg.model.clone(),
+        )));
+    }
+    let gateway = dropagentx_ai::Gateway::new(slots, config.ai_daily_token_cap);
     let static_dir = config.static_dir.clone();
     let addr = format!("{}:{}", config.host, config.port);
 
-    let state = AppState::new(store, config).shared();
+    let state = AppState::new(store, config).with_ai_gateway(gateway).shared();
     let router = build_router(state).into_make_service_with_connect_info::<std::net::SocketAddr>();
 
     tracing::info!(

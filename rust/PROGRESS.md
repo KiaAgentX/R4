@@ -11,12 +11,49 @@
 | 3 | قراردادها — serde + utoipa (OpenAPI 3.1) | ✅ انجام شد | **v4/10** |
 | 4 | سرور Axum + داشبورد static | ✅ انجام شد | **v5/10** |
 | 5 | بات teloxide + صف HITL (آستانه ۵۰,۰۰۰ Đ) | ✅ انجام شد | **v6/10** |
-| 6 | AI Gateway — ۶ ایجنت، ۱۶ مهارت، سقف و audit | ⬜ | — |
+| 6 | AI Gateway — ۶ ایجنت، ۱۶ مهارت، سقف و audit | ✅ انجام شد | **v7/10** |
 | 7 | ادغام فرانت + WASM اختیاری | ⬜ | — |
 | 8 | Dual-run → مهاجرت داده → Cut-over | ⬜ | — |
 | 9 | امضای نهایی — تحویل نسخه ۱۰ از ۱۰ | ⬜ | — |
 
-**وضعیت فعلی: v6/10 — بات تلگرام کامل (orchestrator خالص آفلاین‌تست‌پذیر + webhook آکسوم + polling توسعه + صف HITL دولایه) — کل ورک‌اسپیس ۲۵۰ تست سبز، clippy صفر خطا.**
+**وضعیت فعلی: v7/10 — گیت‌وی AI کامل (fallback قطعی سه‌اسلات + پاکت JSON سخت + redaction ۹قاعده + سقف روزانه + ممیزی چهاروضعیتی) — کل ورک‌اسپیس ۳۱۷ تست سبز، clippy صفر خطا.**
+
+---
+
+## فاز ۶ — AI Gateway (v7/10) ✅
+
+**تحویل‌داده‌شده‌ها** — جایگزین کامل `back/ai-gateway + llm` (~۲٬۵۰۰ LOC TS) در `crates/ai` خالص + سیم‌کشی سرور:
+
+| قطعه | فایل | توضیح |
+|---|---|---|
+| رجیستری واحد | `crates/ai/src/registry.rs` | ۶ ایجنت Zenovix + ۱۶ مهارت KIA-OS با متادیتای fa/en + پرامپت سیستمی؛ `allowed_agents: []` برای wallet_mint/burn (شورایی)؛ نمای وایر `/ai/agents` و `/ai/skills` از همین‌جا تغذیه می‌شود (دادهٔ ثابت state.rs حذف شد) |
+| سه‌اسلات ADR-008 | `crates/ai/src/llm.rs` + `config.rs` | primary→secondary→fallback؛ هر اسلات همه‌یا-هیچ (`OPENAI_BASE_URL_2/…_3`)؛ کلاینت OpenAI-سازگار با timeout ۳۰ثانیه؛ **کلید هرگز در Debug/لاگ/خطا** (Debug دستی)؛ `FakeProvider` اسکریپت‌شده بدون شبکه با clone مشترک |
+| پاکت سخت | `crates/ai/src/packet.rs` | فقط `{"reply"}` یا `{"tool","args"}` — untagged serde؛ **متن خام هرگز عبور نمی‌کند**؛ هر اسلات دو تلاش، دو خراب پیاپی → شکست تایپ‌شده |
+| redaction ۹قاعده | `crates/ai/src/redaction.rs` | PEM/Bearer/JWT/sk/توکن تلگرام/AWS/کارت/seed phrase/hex — ورود (پرامپت)، خروج (reply) و تاریخچه/دانش با شمارش دقیق در پاسخ و audit؛ `LazyLock` بدون وابستگی اضافه |
+| موتور چت | `crates/ai/src/engine.rs` | گیت سقف **قبل از هر فراخوانی** → روتینگ قطعی (کلیدواژه fa/en + direct_agent) → fallback قطعی → گیت مجوز رجیستری (unknown/not-allowed/staff-only → refused trace) → trace + usage |
+| قرارداد backend | `crates/ai/src/tools.rs` | `ToolBackend` (RPITIT) — گیت/ثبت سقف و اجرای مهارت پشت قرارداد؛ crate خالص SQL نمی‌داند |
+| backend واقعی | `crates/server/src/ai_tools.rs` | ۱۶ مهارت روی `V3Store`: خواندنی‌ها فقط روی حساب عامل (staff با accountId)، گذارهای امانت از مسیر دامنهٔ خالص داخل `apply`، **escrow_refund هرگز مستقیم — ردیف HITL با اسکرو دست‌نخورده**، escrow_release staff با `approved_by_admin: true`، kb/product واقعی روی جدول‌های Prisma |
+| هندلر /ai/chat | `crates/server/src/handlers/ai.rs` | گیت‌های هویت فاز ۴ حفظ شد؛ موتور کامل؛ خطاها 429 `AI_CAP_EXCEEDED` (meta.used/limit) / 502 `AI_MALFORMED_PACKET` / 502 `AI_UPSTREAM`؛ **ممیزی هر پاسخ `ai.ok|refused|failed|pending`** با زمینهٔ provider/tokens/redactions |
+| metering | `crates/db/src/queries.rs` | `insert_ai_usage` روی جدول `AiUsage` — مبنای گیت سقف روزانه per-user؛ `search_kb`/`upsert_kb` برای مهارت‌های دانش |
+| تست‌ها | `crates/ai/tests/gateway_tests.rs` + `crates/server/tests/ai_gateway_tests.rs` | ۳۱ تست بستهٔ fake-LLM (معیار: ۲۹ ✓) + ۱۰ انتگراسیون درون‌پردازشی روی SQLite واقعی (معیار: ۹ ✓) + ۲۷ واحد |
+
+**معیارهای پذیرش ADR-009 — هر دو سبز:**
+
+1. **۲۹ تست بستهٔ fake-LLM بدون شبکه + ۹ تست انتگراسیون درون‌پردازشی** — قطع primary → secondary جواب می‌دهد و نام برنده در پاسخ و usage می‌آید؛ همهٔ اسلات‌ها قطع → 502؛ سقف تمام → 429 `AI_CAP_EXCEEDED` **قبل از provider** (شمارندهٔ فراخوانی provider ثابت می‌ماند)؛ پاکت خراب ×۲ → 502 `AI_MALFORMED_PACKET`؛ روتینگ/مجوز/redaction/usage همه ادعاشده.
+2. **redaction روی سیم با شمارش در audit؛ escrow_refund ۶۰٬۰۰۰ Đ → ردیف HITL با اسکرو هنوز FUNDED** — کلید sk/Bearer در پرامپت به provider نمی‌رسد، reply پاک می‌شود و `redactions: 3` روی سیم و در meta ردیف audit می‌نشیند؛ بازپرداخت staff → ردیف `ESCROW_REFUND` در صف (amount از امانت، نه LLM) و اسکرو همان‌جا FUNDED + ممیزی `ai.pending`.
+
+**تصمیم‌های ثبت‌شدهٔ فاز ۶:**
+
+* **پاکتِ یک‌مرحله‌ای بدون فراخوانی دوم** — خروجی ابزار مستقیماً خلاصهٔ انسانی reply می‌شود (بدون LLM دوم)؛ مصرف توکن نصف، رفتار قطعی‌تر، سطح parity ساده‌تر.
+* **اسلات‌های _2/_3 با پسوند env** — `OPENAI_BASE_URL_2/OPENAI_API_KEY_2/MODEL_2` و `_3`؛ هر اسلات مستقلاً همه‌یا-هیچ؛ غیبتشان فقط زنجیره را کوتاه می‌کند (primary با ADR-006 اجباری می‌ماند).
+* **refused هم مصرف provider دارد** — هر پاسخ (حتی رد مجوز یا پاکت خراب) ردیف `AiUsage` با outcome دقیق می‌گیرد تا سقف روزانه قابل دورزدن نباشد.
+* **wallet_mint/wallet_burn از AI ناممکن** — `allowed_agents: []` در رجیستری یعنی حتی staff هم از مسیر چت نمی‌رسد؛ فقط داشبورد ادمین (fail-closed ساختاری، نه runtime).
+* **staff = کلید ادمین + role: staff** — داشبورد با کلید اما role=user همان رفتار کاربر عادی می‌گیرد (دونزولی صریح).
+* **agent fields در AiUsage lowercase** — `AiAgentName::as_str` جدید در قرارداد (additive) — همان قالب serde وایر.
+* **audit meta ساختاریافته و بی‌متن** — ردیف audit فقط provider/model/tokens/redactions/pending/tools دارد؛ متن کاربر و پاسخ هرگز در audit نمی‌نشیند (حریم خصوصی).
+* **regex با LazyLock** — ۹ الگو یک‌بار کامپایل می‌شوند؛ بدون once_cell اضافه.
+
+**آمار فاز ۶:** ~۲٬۶۰۰ LOC گیت‌وی خالص + ~۵۰۰ LOC backend/هندلر + ~۱٬۷۰۰ LOC تست · **۶۷ تست جدید** (۲۷ واحد + ۳۱ بستهٔ gateway + ۱۰ انتگراسیون) · مجموع ورک‌اسپیس: **۳۱۷ سبز** · clippy `-D warnings` صفر خطا · cargo fmt تمیز.
 
 ---
 
