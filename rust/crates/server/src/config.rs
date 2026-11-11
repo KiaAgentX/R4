@@ -78,6 +78,13 @@ pub struct ServerConfig {
     pub llm: Option<LlmConfig>,
     /// توکن بات — هویت عمومی AI از initData مشتق می‌شود.
     pub bot_token: Option<String>,
+    /// توکن مخفی وب‌هوک بات (`X-Telegram-Bot-Api-Secret-Token`) — `None` یعنی
+    /// مسیر webhook بات 503 `BOT_DISABLED` می‌دهد (fail-closed فاز ۵).
+    /// باید ≥ ۱۶ کاراکتر باشد (همان قاعدهٔ کلید ادمین).
+    pub bot_webhook_secret: Option<String>,
+    /// شناسه‌های تلگرام ادمین‌های بات (`BOT_ADMIN_IDS` کاما-جدا) — فهرست خالی
+    /// یعنی هیچ فرمان ادمینی اجرا نمی‌شود.
+    pub bot_admin_ids: Vec<i64>,
     /// نام برند شل داشبورد.
     pub brand_name: String,
     /// شعار برند.
@@ -105,6 +112,8 @@ impl Default for ServerConfig {
             database_url: "file:./db/v3.db".into(),
             llm: None,
             bot_token: None,
+            bot_webhook_secret: None,
+            bot_admin_ids: Vec::new(),
             brand_name: "DropAgentX".into(),
             brand_tagline: "Empire".into(),
             host: "0.0.0.0".into(),
@@ -138,6 +147,13 @@ impl ServerConfig {
         }
         if let Some(v) = env_opt("TELEGRAM_BOT_TOKEN") {
             cfg.bot_token = Some(v);
+        }
+        if let Some(v) = env_opt("BOT_WEBHOOK_SECRET") {
+            cfg.bot_webhook_secret = Some(v);
+        }
+        if let Some(v) = env_opt("BOT_ADMIN_IDS") {
+            // فهرست کاما-جدا؛ ورودی نامعتبر نادیده گرفته می‌شود (lenient مثل KEEP_BACKUPS)
+            cfg.bot_admin_ids = v.split(',').filter_map(|s| s.trim().parse::<i64>().ok()).collect();
         }
         if let Some(v) = env_opt("BRAND_NAME") {
             cfg.brand_name = v;

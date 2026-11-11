@@ -36,8 +36,9 @@ tokio = { version = "1.45", features = ["full"] }
 axum = "0.8"
 tower = "0.5"
 tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
-# bot
-teloxide = { version = "0.13", features = ["macros"] }
+# bot — فاز ۵: teloxide فقط «رانر» است (قلب بات بدون آن، ADR-009 §۸٫۵)؛
+# rustls به‌جای native-tls تا با تصمیم reqwest ورک‌اسپیس هم‌راستا بماند
+teloxide = { version = "0.13", default-features = false, features = ["macros", "rustls", "ctrlc_handler"] }
 # persistence — فاز ۲: sqlite (نه postgres). دلیل: دیتابیس واقعی v3 و لگاسی هر دو
 # SQLite است (schema.prisma → provider "sqlite") و dual-run فاز ۸ باید روی «همان
 # فایل» کار کند. اگر روزی Postgres لازم شد، فقط همین یک خط عوض می‌شود؛
@@ -72,3 +73,4 @@ chrono = { version = "0.4", features = ["serde"] }
 dropagentx-domain = { path = "crates/domain" }
 dropagentx-contracts = { path = "crates/contracts" }
 dropagentx-db = { path = "crates/db" }
+dropagentx-bot = { path = "crates/bot" }

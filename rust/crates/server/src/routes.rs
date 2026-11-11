@@ -20,7 +20,7 @@ use tower_http::trace::TraceLayer;
 
 use dropagentx_contracts::{api_routes, build_openapi_doc_inlined, docs_page_html, openapi_info};
 
-use crate::handlers::{accounts, ai, dashboard, escrows, hitl, system, wallet};
+use crate::handlers::{accounts, ai, bot, dashboard, escrows, hitl, system, wallet};
 use crate::middleware::rate_limit_middleware;
 use crate::state::AppState;
 
@@ -82,6 +82,8 @@ pub fn build_router(state: Arc<AppState>) -> Router {
         .route("/hitl/{id}", get(hitl::get_one))
         .route("/hitl/{id}/approve", post(hitl::approve))
         .route("/hitl/{id}/reject", post(hitl::reject))
+        // فاز ۵ — webhook بات (additive؛ خارج رجیستری TS، مثل تصمیم /ai/chat فاز ۴)
+        .route("/bot/webhook", post(bot::webhook))
         // ai
         .route("/ai/chat", post(ai::chat))
         .route("/ai/agents", get(ai::agents))

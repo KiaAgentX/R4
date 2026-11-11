@@ -7,6 +7,7 @@
 
 pub mod accounts;
 pub mod ai;
+pub mod bot;
 pub mod dashboard;
 pub mod escrows;
 pub mod hitl;

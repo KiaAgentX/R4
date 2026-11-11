@@ -117,6 +117,18 @@ impl HttpFailure {
         Self::new(503, "DB_DOWN", "The server cannot reach its database.")
     }
 
+    /// بات غیرفعال — بدون `BOT_WEBHOOK_SECRET` (fail-closed فاز ۵، مثل admin).
+    #[must_use]
+    pub fn bot_disabled() -> Self {
+        Self::new(503, "BOT_DISABLED", "Bot webhook is disabled — set BOT_WEBHOOK_SECRET.")
+    }
+
+    /// توکن مخفی وب‌هوک بات اشتباه است (`X-Telegram-Bot-Api-Secret-Token`).
+    #[must_use]
+    pub fn bot_unauthorized() -> Self {
+        Self::new(401, "BOT_UNAUTHORIZED", "Invalid X-Telegram-Bot-Api-Secret-Token.")
+    }
+
     /// بکاپ فقط برای SQLite فایل‌محور.
     #[must_use]
     pub fn backup_unsupported() -> Self {

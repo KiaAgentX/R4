@@ -10,13 +10,51 @@
 | 2 | پیوند persistence — sqlx + Outbox + Genesis (legacy:genesis:v1) | ✅ انجام شد | **v3/10** |
 | 3 | قراردادها — serde + utoipa (OpenAPI 3.1) | ✅ انجام شد | **v4/10** |
 | 4 | سرور Axum + داشبورد static | ✅ انجام شد | **v5/10** |
-| 5 | بات teloxide + صف HITL (آستانه ۵۰,۰۰۰ Đ) | ⬜ | — |
+| 5 | بات teloxide + صف HITL (آستانه ۵۰,۰۰۰ Đ) | ✅ انجام شد | **v6/10** |
 | 6 | AI Gateway — ۶ ایجنت، ۱۶ مهارت، سقف و audit | ⬜ | — |
 | 7 | ادغام فرانت + WASM اختیاری | ⬜ | — |
 | 8 | Dual-run → مهاجرت داده → Cut-over | ⬜ | — |
 | 9 | امضای نهایی — تحویل نسخه ۱۰ از ۱۰ | ⬜ | — |
 
-**وضعیت فعلی: v5/10 — سرور Axum کامل (۴۶ مسیر رجیستری واحد + امنیت چندلایه + OpenAPI/ردوک + ServeDir) — کل ورک‌اسپیس ۲۰۱ تست سبز، clippy صفر خطا.**
+**وضعیت فعلی: v6/10 — بات تلگرام کامل (orchestrator خالص آفلاین‌تست‌پذیر + webhook آکسوم + polling توسعه + صف HITL دولایه) — کل ورک‌اسپیس ۲۵۰ تست سبز، clippy صفر خطا.**
+
+---
+
+## فاز ۵ — بات teloxide + صف HITL (v6/10) ✅
+
+**تحویل‌داده‌شده‌ها** — پورت یک‌به‌یک الگوی بات grammY فعلی — قلب خالص بدون teloxide طبق ADR-009 §۸٫۵ (TS مرجع: `back/bot/src/orchestrator.ts`):
+
+| قطعه | فایل | توضیح |
+|---|---|---|
+| DTOهای وایر | `crates/bot/src/wire.rs` | `WireUpdate/WireMessage/WireUser/WireChat` — بدون teloxide؛ فرستندهٔ غایب = fail-closed؛ `BotAction` + کیبورد شیشه‌ای |
+| ۱۹ فرمان | `crates/bot/src/cmd.rs` | ۱۴ دستور کاربر + ۵ ادمین با گیت `is_admin`؛ `/cmd@Bot` و بزرگی‌حرف بی‌اثر |
+| i18n fa/en | `crates/bot/src/i18n.rs` | پیش‌فرض fa، hint از `language_code`، انتخاب صریح `/lang`؛ **نگاشت هر ۲۰ کد دامنه + گاردهای authz به پیام محلی** (کد وایر هرگز به کاربر نشان داده نمی‌شود) |
+| کیبورد شیشه‌ای | `crates/bot/src/keyboard.rs` | دکمه = متن = فرمان (رفت‌وبرگشت پایدار fa/en)؛ منوی ۴ردیفی + منوی ادمین |
+| قرارداد backend | `crates/bot/src/env.rs` | trait `Env` (RPITIT + Send) — قلب از هر backend جدا؛ `user_account = user:tg:<id>` فاز ۲ |
+| backend حافظه | `crates/bot/src/memory.rs` | معناشناسی عین `V3Store::apply`: پیش‌چک replay → گارد نقش → دامنهٔ خالص → audit؛ آفلاین و قطعی |
+| قلب خالص | `crates/bot/src/orchestrator.rs` | `handle_update(env, msg)` — authz سیم (خریدار fund/release/dispute/cancel، فروشنده deliver)، auto-resolve آخرین امانت باز، خطا → پیام محلی |
+| رانر polling | `crates/bot/src/runner.rs` | teloxide فقط تبدیل Message↔Wire و ارسال؛ پیام بی‌متن/بی‌فرستنده نادیده |
+| webhook آکسوم | `crates/server/src/handlers/bot.rs` + `bot_env.rs` | `POST /api/v1/bot/webhook` (additive، خارج رجیستری TS)؛ پاسخ HTTP = فرمان `sendMessage` (الگوی std/http)؛ `StoreEnv` روی SQLite واقعی |
+| امنیت webhook | `crates/contracts/src/error.rs` + `server/config.rs` | 503 `BOT_DISABLED` بدون `BOT_WEBHOOK_SECRET`؛ 401 `BOT_UNAUTHORIZED` با مقایسهٔ زمان‌ثابت (helper فاز ۳)؛ `BOT_ADMIN_IDS` ادمین‌های بات |
+| باینری توسعه | `crates/server/src/bin/dropagentx-bot.rs` | polling توسعه — بوت fail-closed (۲ توکن غایب، ۳ دیتابیس، ۴ رانر)؛ مستقل از کانفیگ LLM |
+
+**معیارهای پذیرش ADR-009 — هر دو سبز:**
+
+1. **۲۰+ تست بات پورت و سبز؛ retry دوبار پول جابه‌جا نمی‌کند** — ۴۹ تست فاز ۵ (۱۸ واحد + ۲۴ orchestrator آفلاین روی MemoryDomain + ۸ انتگراسیون webhook روی SQLite واقعی): کلید یکسان‌سازی `tg:{chat}:{message_id}` از پیام تلگرام می‌آید؛ replay همان `/fund` پیام «قبلاً پردازش شده» می‌دهد و تراز ثابت می‌ماند؛ replay `/buy` امانت دوم نمی‌سازد؛ replay `/release` ≥۵۰k ردیف HITL دوم نمی‌سازد.
+2. **HITL ≥ ۵۰٬۰۰۰ Đ از صف می‌گذرد؛ تأیید دقیقاً ۹۰/۱۰؛ تأیید دوم تایپ‌شده با بازپرداخت صفر** — `/release ۶۰٬۰۰۰` → خطای `REQUIRES_HUMAN_APPROVAL` دامنه → درخواست `hitl:esc:…` در صف (دولایه: حافظه و سرور) با امانت همان‌جا DELIVERED؛ `/approve` ادمین → تسویهٔ اتمیک همان تراکنش (فروشنده +54,000 از 60,000، خزانه +6,000)؛ تأیید دوباره → `HITL_ALREADY_DECIDED` محلی‌شده، Σ ترازها ۰؛ مرز دقیق ۵۰٬۰۰۰ هم صف می‌خواهد؛ TTL ۲۴ ساعت → `HITL_EXPIRED`؛ `/reject` هیچ پولی نمی‌برد.
+
+**تصمیم‌های ثبت‌شدهٔ فاز ۵:**
+
+* **teloxide فقط رانر** — قلب بات (`orchestrator`) صفر وابستگی به teloxide/IO دارد و روی `MemoryDomain` آفلاین تست می‌شود؛ رانر webhook در آکسوم (تولید) و polling teloxide (توسعه) هر دو همان یک مسیر را اجرا می‌کنند.
+* **teloxide با `rustls` به‌جای native-tls** — هم‌راستا با تصمیم reqwest ورک‌اسپیس؛ درخت openssl وارد بیلد نمی‌شود + feature `ctrlc_handler` برای `repl`.
+* **کلید یکسان‌سازی با chat_id مقیاس می‌شود** — `message_id` تلگرام فقط در چت یکتاست؛ کلید `tg:{chat}:{msg}` و شناسهٔ امانت بات `esc:c{chat}m{msg}` دترمیینیستیک‌اند تا retry وب‌هوک امن باشد.
+* **authz دولایه** — orchestrator پیام دقیقِ نقش (خریدار/فروشنده/غریبه) می‌سازد و هر دو backend گارد را دوباره داخل فرمان اعمال می‌کنند؛ گذار پولی از مسیر دامنهٔ خالص فاز ۱ می‌گذرد (عین هندلرهای فاز ۴).
+* **webhook = پاسخ sendMessage در بدنهٔ HTTP** — رانر ارسال جدا در تولید لازم نیست؛ چند action → اولی ارسال، بقیه در لاگ.
+* **session زبان درون‌حافظه‌ای** — `BTreeMap<i64, Locale>` در AppState؛ parity فاز ۸ روی state session زبان نیست (فقط رفتار پایه فرمان‌ها).
+* **audit صادقانهٔ بات** — actor در `ApplyOptions` حساب واقعی شهروند است (`user:tg:<id>`) نه «admin»؛ + audit_ext `bot.escrow.*` برای مسیر webhook.
+* **ادمین‌های بات lenient** — `BOT_ADMIN_IDS` کاما-جدا، ورودی نامعتبر نادیده (مثل KEEP_BACKUPS)؛ فهرست خالی یعنی هیچ فرمان ادمینی اجرا نمی‌شود (fail-closed).
+
+**آمار فاز ۵:** ~۲٬۹۰۰ LOC بات + ~۵۰۰ LOC webhook/StoreEnv + ~۱٬۲۰۰ LOC تست · **۴۹ تست جدید** (۱۸ واحد + ۲۴ orchestrator + ۸ انتگراسیون webhook) · مجموع ورک‌اسپیس: **۲۵۰ سبز** · clippy `-D warnings` صفر خطا · cargo fmt تمیز.
 
 ---
 

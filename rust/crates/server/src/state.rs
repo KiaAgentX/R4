@@ -5,6 +5,7 @@
 //! ایجنت/مهارت دادهٔ ثابت `/ai/agents` و `/ai/skills` است (فاز ۶ اجرای واقعی
 //! مهارت‌ها را روی همین شناسه‌ها سیم می‌کند).
 
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
@@ -261,6 +262,9 @@ pub struct AppState {
     pub config: ServerConfig,
     /// limiter نرخ پنجرهٔ لغزان — یکی به ازای سرور.
     pub limiter: Mutex<RateLimiter>,
+    /// انتخاب زبان کاربران بات (`/lang`) — session درون‌حافظه‌ای فاز ۵
+    /// (دول‌ران parity روی زبان session نیست؛ تصمیم ثبت‌شدهٔ فاز ۵).
+    pub bot_sessions: Arc<Mutex<BTreeMap<i64, dropagentx_bot::Locale>>>,
     /// لحظهٔ شروع — uptime در health.
     pub started_at: Instant,
 }
@@ -271,6 +275,7 @@ impl AppState {
     pub fn new(store: V3Store, config: ServerConfig) -> Self {
         Self {
             limiter: Mutex::new(RateLimiter::new(config.rate_limit)),
+            bot_sessions: Arc::new(Mutex::new(BTreeMap::new())),
             store,
             config,
             started_at: Instant::now(),

@@ -1,6 +1,6 @@
 [package]
 name = "dropagentx-bot"
-description = "آداپتور تلگرام — teloxide، ۲۷ هندلر، ۲۵ زبان (فاز ۵)"
+description = "آداپتور تلگرام — orchestrator خالص آفلاین‌تست‌پذیر + رانر (فاز ۵)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -11,4 +11,18 @@ publish = false
 workspace = true
 
 [dependencies]
-# فاز ۰: بدون وابستگی خارجی — از فاز بعدی با workspace = true اضافه می‌شود.
+# فاز ۵ — DTOهای وایر تلگرام با serde؛ orchestrator بدون teloxide
+# (تصمیم ADR-009 §۸٫۵: teloxide فقط «رانر» است؛ قلب بات خالص و آفلاین‌تست‌پذیر است).
+# رانر polling توسعه — update → orchestrator → actions → send
+teloxide = { workspace = true }
+tokio = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+# TTL ۲۴ ساعت صف HITL — از ساعت قطعی backend محاسبه می‌شود (بدون ساعت واقعی)
+chrono = { workspace = true }
+dropagentx-domain = { workspace = true }
+dropagentx-contracts = { workspace = true }
+
+

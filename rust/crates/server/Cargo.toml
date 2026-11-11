@@ -26,6 +26,8 @@ chrono = { workspace = true }
 dropagentx-contracts = { workspace = true }
 dropagentx-domain = { workspace = true }
 dropagentx-db = { workspace = true }
+# فاز ۵ — قلب خالص بات (orchestrator + DTOهای وایر) اینجا روی StoreEnv می‌نشیند
+dropagentx-bot = { workspace = true }
 
 [dev-dependencies]
 # oneshot (معادل app.inject فستیفای) — تست‌های سرور
