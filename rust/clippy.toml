@@ -1,0 +1,3 @@
+# unwrap/expect فقط داخل تست‌ها مجاز است
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true

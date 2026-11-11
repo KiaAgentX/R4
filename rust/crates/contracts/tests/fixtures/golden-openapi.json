@@ -1,0 +1,7987 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "DropAgentX v3 — Unified Core API",
+  "version": "4.4.3",
+  "description": "Admin service API over the pure domain core: integer money, immutable double-entry ledger, escrow state machine, 10-article monetary charter. Errors follow { error: { code, message } } — codes are additive."
+ },
+ "servers": [
+  {
+   "url": "/api/v1"
+  }
+ ],
+ "tags": [
+  {
+   "name": "system"
+  },
+  {
+   "name": "economy"
+  },
+  {
+   "name": "accounts"
+  },
+  {
+   "name": "wallet"
+  },
+  {
+   "name": "escrows"
+  },
+  {
+   "name": "hitl"
+  },
+  {
+   "name": "ai"
+  },
+  {
+   "name": "dashboard"
+  }
+ ],
+ "components": {
+  "securitySchemes": {
+   "kiaAdminKey": {
+    "type": "apiKey",
+    "in": "header",
+    "name": "X-KIA-Key",
+    "description": "Fail-closed admin key (KIA_ADMIN_KEY). Missing key on the server disables admin endpoints entirely."
+   }
+  }
+ },
+ "paths": {
+  "/health": {
+   "get": {
+    "operationId": "health",
+    "summary": "Liveness probe of the v3 server",
+    "tags": [
+     "system"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "status": {
+           "type": "string",
+           "const": "ok"
+          },
+          "service": {
+           "type": "string",
+           "const": "dropagentx-v3-server"
+          },
+          "version": {
+           "type": "string"
+          },
+          "llmConfigured": {
+           "type": "boolean"
+          },
+          "llmModel": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "db": {
+           "type": "string"
+          },
+          "bot": {
+           "type": "string"
+          },
+          "ai": {
+           "type": "string"
+          },
+          "uptime": {
+           "type": "number"
+          }
+         },
+         "required": [
+          "status",
+          "service",
+          "version",
+          "llmConfigured",
+          "llmModel"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/economy": {
+   "get": {
+    "operationId": "getEconomy",
+    "summary": "Nation economy summary — public transparency (charter Article 6)",
+    "tags": [
+     "economy"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "currency": {
+           "type": "string",
+           "const": "DNX"
+          },
+          "symbol": {
+           "type": "string",
+           "const": "Đ"
+          },
+          "circulatingSupply": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "treasuryBalance": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "escrowLocked": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "mintedAllTime": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "burnedAllTime": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "mintedThisYear": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "yearlyMintCap": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "genesisSupply": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "trialBalanceSum": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          "balanced": {
+           "type": "boolean"
+          },
+          "accountCount": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          "openEscrows": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          }
+         },
+         "required": [
+          "currency",
+          "symbol",
+          "circulatingSupply",
+          "treasuryBalance",
+          "escrowLocked",
+          "mintedAllTime",
+          "burnedAllTime",
+          "mintedThisYear",
+          "yearlyMintCap",
+          "genesisSupply",
+          "trialBalanceSum",
+          "balanced",
+          "accountCount",
+          "openEscrows"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/accounts": {
+   "post": {
+    "operationId": "createAccount",
+    "summary": "Register a user account (balance starts at 0)",
+    "tags": [
+     "accounts"
+    ],
+    "responses": {
+     "201": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "kind": {
+           "type": "string"
+          },
+          "label": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "balance": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          "createdAt": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "id",
+          "kind",
+          "label",
+          "balance",
+          "createdAt"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "label": {
+          "type": "string",
+          "maxLength": 120
+         }
+        },
+        "required": [
+         "id"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   },
+   "get": {
+    "operationId": "listAccounts",
+    "summary": "List all accounts with derived balances",
+    "tags": [
+     "accounts"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "kind": {
+              "type": "string"
+             },
+             "label": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "balance": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991
+             },
+             "createdAt": {
+              "type": "string"
+             }
+            },
+            "required": [
+             "id",
+             "kind",
+             "label",
+             "balance",
+             "createdAt"
+            ],
+            "additionalProperties": false
+           }
+          }
+         },
+         "required": [
+          "items"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/accounts/{id}/balance": {
+   "get": {
+    "operationId": "getBalance",
+    "summary": "Derived balance of one account (public transparency)",
+    "tags": [
+     "accounts"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "accountId": {
+           "type": "string"
+          },
+          "balance": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          }
+         },
+         "required": [
+          "accountId",
+          "balance"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ]
+   }
+  },
+  "/wallet/mint": {
+   "post": {
+    "operationId": "mint",
+    "summary": "Mint dinar into a user account — yearly cap enforced (charter Article 3)",
+    "tags": [
+     "wallet"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "txId": {
+           "type": "string"
+          },
+          "accountId": {
+           "type": "string"
+          },
+          "balance": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "txId",
+          "accountId",
+          "balance",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "accountId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "amount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "memo": {
+          "type": "string",
+          "maxLength": 200
+         },
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        },
+        "required": [
+         "accountId",
+         "amount"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/wallet/burn": {
+   "post": {
+    "operationId": "burn",
+    "summary": "Burn dinar from a user account — overdraft-impossible (charter Article 4)",
+    "tags": [
+     "wallet"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "txId": {
+           "type": "string"
+          },
+          "accountId": {
+           "type": "string"
+          },
+          "balance": {
+           "type": "integer",
+           "minimum": -9007199254740991,
+           "maximum": 9007199254740991
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "txId",
+          "accountId",
+          "balance",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "accountId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "amount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "memo": {
+          "type": "string",
+          "maxLength": 200
+         },
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        },
+        "required": [
+         "accountId",
+         "amount"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows": {
+   "post": {
+    "operationId": "createEscrow",
+    "summary": "Create an escrow (CREATED; money not moved yet)",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "201": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "buyerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "sellerId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "amount": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "productRef": {
+          "type": "string",
+          "maxLength": 128
+         },
+         "ttlHours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 720
+         },
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        },
+        "required": [
+         "buyerId",
+         "sellerId",
+         "amount"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   },
+   "get": {
+    "operationId": "listEscrows",
+    "summary": "List escrows (optionally filtered by status)",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "buyerId": {
+              "type": "string"
+             },
+             "sellerId": {
+              "type": "string"
+             },
+             "amount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+             },
+             "productRef": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "status": {
+              "type": "string",
+              "enum": [
+               "CREATED",
+               "FUNDED",
+               "DELIVERED",
+               "RELEASED",
+               "DISPUTED",
+               "REFUNDED",
+               "CANCELLED",
+               "EXPIRED"
+              ]
+             },
+             "createdAt": {
+              "type": "string"
+             },
+             "fundedTxId": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "settleTxId": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "disputeReason": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "deliveryRef": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "expiresAt": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             }
+            },
+            "required": [
+             "id",
+             "buyerId",
+             "sellerId",
+             "amount",
+             "productRef",
+             "status",
+             "createdAt",
+             "fundedTxId",
+             "settleTxId",
+             "disputeReason",
+             "deliveryRef",
+             "expiresAt"
+            ],
+            "additionalProperties": false
+           }
+          }
+         },
+         "required": [
+          "items"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "enum": [
+        "CREATED",
+        "FUNDED",
+        "DELIVERED",
+        "RELEASED",
+        "DISPUTED",
+        "REFUNDED",
+        "CANCELLED",
+        "EXPIRED"
+       ]
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}": {
+   "get": {
+    "operationId": "getEscrow",
+    "summary": "Read one escrow (public transparency)",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "buyerId": {
+           "type": "string"
+          },
+          "sellerId": {
+           "type": "string"
+          },
+          "amount": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "productRef": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "status": {
+           "type": "string",
+           "enum": [
+            "CREATED",
+            "FUNDED",
+            "DELIVERED",
+            "RELEASED",
+            "DISPUTED",
+            "REFUNDED",
+            "CANCELLED",
+            "EXPIRED"
+           ]
+          },
+          "createdAt": {
+           "type": "string"
+          },
+          "fundedTxId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "settleTxId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "disputeReason": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "deliveryRef": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "expiresAt": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          }
+         },
+         "required": [
+          "id",
+          "buyerId",
+          "sellerId",
+          "amount",
+          "productRef",
+          "status",
+          "createdAt",
+          "fundedTxId",
+          "settleTxId",
+          "disputeReason",
+          "deliveryRef",
+          "expiresAt"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/fund": {
+   "post": {
+    "operationId": "fundEscrow",
+    "summary": "Lock buyer money into the escrow account",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/deliver": {
+   "post": {
+    "operationId": "deliverEscrow",
+    "summary": "Mark the product as delivered (money still locked)",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "deliveryRef": {
+          "type": "string",
+          "maxLength": 256
+         },
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/release": {
+   "post": {
+    "operationId": "releaseEscrow",
+    "summary": "Settle: seller gets net (90%), treasury gets tax (10%) — HITL gate ≥ 50,000 Đ",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "approvedByAdmin": {
+          "type": "boolean"
+         },
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/dispute": {
+   "post": {
+    "operationId": "disputeEscrow",
+    "summary": "Open a dispute (escrow stays locked until arbitration)",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "reason": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500
+         },
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        },
+        "required": [
+         "reason"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/refund": {
+   "post": {
+    "operationId": "refundEscrow",
+    "summary": "Arbitration in favor of the buyer — full refund, no tax",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/cancel": {
+   "post": {
+    "operationId": "cancelEscrow",
+    "summary": "Cancel a CREATED escrow — no money ever moved",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/escrows/{id}/expire": {
+   "post": {
+    "operationId": "expireEscrow",
+    "summary": "TTL sweep — auto-refund a FUNDED escrow (charter Article 9)",
+    "tags": [
+     "escrows"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "escrow": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "buyerId": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "productRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "CREATED",
+              "FUNDED",
+              "DELIVERED",
+              "RELEASED",
+              "DISPUTED",
+              "REFUNDED",
+              "CANCELLED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "fundedTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "settleTxId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "disputeReason": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "deliveryRef": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "expiresAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "buyerId",
+            "sellerId",
+            "amount",
+            "productRef",
+            "status",
+            "createdAt",
+            "fundedTxId",
+            "settleTxId",
+            "disputeReason",
+            "deliveryRef",
+            "expiresAt"
+           ],
+           "additionalProperties": false
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "idempotencyKey": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 128
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/hitl": {
+   "post": {
+    "operationId": "createHitlRequest",
+    "summary": "Queue a human-approval request (amount copied from the escrow; duplicate id → replay)",
+    "tags": [
+     "hitl"
+    ],
+    "responses": {
+     "201": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "kind": {
+           "type": "string",
+           "enum": [
+            "ESCROW_RELEASE"
+           ]
+          },
+          "escrowId": {
+           "type": "string"
+          },
+          "amount": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "requesterId": {
+           "type": "string"
+          },
+          "note": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "status": {
+           "type": "string",
+           "enum": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "EXPIRED"
+           ]
+          },
+          "createdAt": {
+           "type": "string"
+          },
+          "expiresAt": {
+           "type": "string"
+          },
+          "decidedBy": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "decidedAt": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "decisionNote": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          }
+         },
+         "required": [
+          "id",
+          "kind",
+          "escrowId",
+          "amount",
+          "requesterId",
+          "note",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "decidedBy",
+          "decidedAt",
+          "decisionNote"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "kind": {
+          "type": "string",
+          "enum": [
+           "ESCROW_RELEASE"
+          ]
+         },
+         "escrowId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "requesterId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "note": {
+          "type": "string",
+          "maxLength": 500
+         },
+         "ttlHours": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 720
+         }
+        },
+        "required": [
+         "kind",
+         "escrowId",
+         "requesterId"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   },
+   "get": {
+    "operationId": "listHitlRequests",
+    "summary": "List HITL requests (optionally filtered by status)",
+    "tags": [
+     "hitl"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "kind": {
+              "type": "string",
+              "enum": [
+               "ESCROW_RELEASE"
+              ]
+             },
+             "escrowId": {
+              "type": "string"
+             },
+             "amount": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+             },
+             "requesterId": {
+              "type": "string"
+             },
+             "note": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "status": {
+              "type": "string",
+              "enum": [
+               "PENDING",
+               "APPROVED",
+               "REJECTED",
+               "EXPIRED"
+              ]
+             },
+             "createdAt": {
+              "type": "string"
+             },
+             "expiresAt": {
+              "type": "string"
+             },
+             "decidedBy": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "decidedAt": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             },
+             "decisionNote": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             }
+            },
+            "required": [
+             "id",
+             "kind",
+             "escrowId",
+             "amount",
+             "requesterId",
+             "note",
+             "status",
+             "createdAt",
+             "expiresAt",
+             "decidedBy",
+             "decidedAt",
+             "decisionNote"
+            ],
+            "additionalProperties": false
+           }
+          }
+         },
+         "required": [
+          "items"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "enum": [
+        "PENDING",
+        "APPROVED",
+        "REJECTED",
+        "EXPIRED"
+       ]
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/hitl/{id}": {
+   "get": {
+    "operationId": "getHitlRequest",
+    "summary": "Read one HITL request",
+    "tags": [
+     "hitl"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "id": {
+           "type": "string"
+          },
+          "kind": {
+           "type": "string",
+           "enum": [
+            "ESCROW_RELEASE"
+           ]
+          },
+          "escrowId": {
+           "type": "string"
+          },
+          "amount": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "requesterId": {
+           "type": "string"
+          },
+          "note": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "status": {
+           "type": "string",
+           "enum": [
+            "PENDING",
+            "APPROVED",
+            "REJECTED",
+            "EXPIRED"
+           ]
+          },
+          "createdAt": {
+           "type": "string"
+          },
+          "expiresAt": {
+           "type": "string"
+          },
+          "decidedBy": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "decidedAt": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "decisionNote": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          }
+         },
+         "required": [
+          "id",
+          "kind",
+          "escrowId",
+          "amount",
+          "requesterId",
+          "note",
+          "status",
+          "createdAt",
+          "expiresAt",
+          "decidedBy",
+          "decidedAt",
+          "decisionNote"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/hitl/{id}/approve": {
+   "post": {
+    "operationId": "approveHitlRequest",
+    "summary": "Approve → ESCROW_RELEASE settles in the same transaction (seller 90% + treasury 10%)",
+    "tags": [
+     "hitl"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "request": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "kind": {
+             "type": "string",
+             "enum": [
+              "ESCROW_RELEASE"
+             ]
+            },
+            "escrowId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "requesterId": {
+             "type": "string"
+            },
+            "note": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "expiresAt": {
+             "type": "string"
+            },
+            "decidedBy": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "decidedAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "decisionNote": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "kind",
+            "escrowId",
+            "amount",
+            "requesterId",
+            "note",
+            "status",
+            "createdAt",
+            "expiresAt",
+            "decidedBy",
+            "decidedAt",
+            "decisionNote"
+           ],
+           "additionalProperties": false
+          },
+          "escrow": {
+           "anyOf": [
+            {
+             "type": "object",
+             "properties": {
+              "id": {
+               "type": "string"
+              },
+              "buyerId": {
+               "type": "string"
+              },
+              "sellerId": {
+               "type": "string"
+              },
+              "amount": {
+               "type": "integer",
+               "minimum": 0,
+               "maximum": 9007199254740991
+              },
+              "productRef": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "status": {
+               "type": "string",
+               "enum": [
+                "CREATED",
+                "FUNDED",
+                "DELIVERED",
+                "RELEASED",
+                "DISPUTED",
+                "REFUNDED",
+                "CANCELLED",
+                "EXPIRED"
+               ]
+              },
+              "createdAt": {
+               "type": "string"
+              },
+              "fundedTxId": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "settleTxId": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "disputeReason": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "deliveryRef": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "expiresAt": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              }
+             },
+             "required": [
+              "id",
+              "buyerId",
+              "sellerId",
+              "amount",
+              "productRef",
+              "status",
+              "createdAt",
+              "fundedTxId",
+              "settleTxId",
+              "disputeReason",
+              "deliveryRef",
+              "expiresAt"
+             ],
+             "additionalProperties": false
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "request",
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "decidedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "note": {
+          "type": "string",
+          "maxLength": 500
+         }
+        },
+        "required": [
+         "decidedBy"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/hitl/{id}/reject": {
+   "post": {
+    "operationId": "rejectHitlRequest",
+    "summary": "Reject — no money moves; the escrow stays locked until arbitration decides otherwise",
+    "tags": [
+     "hitl"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "request": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "kind": {
+             "type": "string",
+             "enum": [
+              "ESCROW_RELEASE"
+             ]
+            },
+            "escrowId": {
+             "type": "string"
+            },
+            "amount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "requesterId": {
+             "type": "string"
+            },
+            "note": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "PENDING",
+              "APPROVED",
+              "REJECTED",
+              "EXPIRED"
+             ]
+            },
+            "createdAt": {
+             "type": "string"
+            },
+            "expiresAt": {
+             "type": "string"
+            },
+            "decidedBy": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "decidedAt": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "decisionNote": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "kind",
+            "escrowId",
+            "amount",
+            "requesterId",
+            "note",
+            "status",
+            "createdAt",
+            "expiresAt",
+            "decidedBy",
+            "decidedAt",
+            "decisionNote"
+           ],
+           "additionalProperties": false
+          },
+          "escrow": {
+           "anyOf": [
+            {
+             "type": "object",
+             "properties": {
+              "id": {
+               "type": "string"
+              },
+              "buyerId": {
+               "type": "string"
+              },
+              "sellerId": {
+               "type": "string"
+              },
+              "amount": {
+               "type": "integer",
+               "minimum": 0,
+               "maximum": 9007199254740991
+              },
+              "productRef": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "status": {
+               "type": "string",
+               "enum": [
+                "CREATED",
+                "FUNDED",
+                "DELIVERED",
+                "RELEASED",
+                "DISPUTED",
+                "REFUNDED",
+                "CANCELLED",
+                "EXPIRED"
+               ]
+              },
+              "createdAt": {
+               "type": "string"
+              },
+              "fundedTxId": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "settleTxId": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "disputeReason": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "deliveryRef": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              },
+              "expiresAt": {
+               "anyOf": [
+                {
+                 "type": "string"
+                },
+                {
+                 "type": "null"
+                }
+               ]
+              }
+             },
+             "required": [
+              "id",
+              "buyerId",
+              "sellerId",
+              "amount",
+              "productRef",
+              "status",
+              "createdAt",
+              "fundedTxId",
+              "settleTxId",
+              "disputeReason",
+              "deliveryRef",
+              "expiresAt"
+             ],
+             "additionalProperties": false
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "txId": {
+           "anyOf": [
+            {
+             "type": "string"
+            },
+            {
+             "type": "null"
+            }
+           ]
+          },
+          "replayed": {
+           "type": "boolean"
+          }
+         },
+         "required": [
+          "request",
+          "escrow",
+          "txId",
+          "replayed"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "decidedBy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "note": {
+          "type": "string",
+          "maxLength": 500
+         }
+        },
+        "required": [
+         "decidedBy"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/hitl/sweep": {
+   "post": {
+    "operationId": "sweepHitl",
+    "summary": "TTL sweep — expire overdue PENDING requests (bots call this on an interval)",
+    "tags": [
+     "hitl"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "expired": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          }
+         },
+         "required": [
+          "expired"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/system/backup": {
+   "post": {
+    "operationId": "createBackup",
+    "summary": "Consistent SQLite snapshot (VACUUM INTO) into db/backups — prunes to the newest KEEP_BACKUPS files. Admin-gated.",
+    "tags": [
+     "system"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "file": {
+           "type": "string"
+          },
+          "sizeBytes": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "kept": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "createdAt": {
+           "type": "string"
+          }
+         },
+         "required": [
+          "file",
+          "sizeBytes",
+          "kept",
+          "createdAt"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/ai/chat": {
+   "post": {
+    "operationId": "aiChat",
+    "summary": "Ask the Zenovix agent team — routing, skills, metering, redaction and audit run server-side",
+    "tags": [
+     "ai"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "reply": {
+           "type": "string"
+          },
+          "agent": {
+           "type": "string",
+           "enum": [
+            "orchestrator",
+            "receptionist",
+            "sales",
+            "support",
+            "analyst",
+            "content"
+           ]
+          },
+          "via": {
+           "type": "string",
+           "enum": [
+            "direct",
+            "prefilter",
+            "llm"
+           ]
+          },
+          "provider": {
+           "type": "string"
+          },
+          "toolTraces": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "skill": {
+              "type": "string"
+             },
+             "ok": {
+              "type": "boolean"
+             },
+             "summary": {
+              "type": "string"
+             },
+             "pendingApproval": {
+              "type": "boolean"
+             },
+             "code": {
+              "anyOf": [
+               {
+                "type": "string"
+               },
+               {
+                "type": "null"
+               }
+              ]
+             }
+            },
+            "required": [
+             "skill",
+             "ok",
+             "summary",
+             "pendingApproval",
+             "code"
+            ],
+            "additionalProperties": false
+           }
+          },
+          "usage": {
+           "type": "object",
+           "properties": {
+            "provider": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "model": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "promptTokens": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "completionTokens": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "totalTokens": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "provider",
+            "model",
+            "promptTokens",
+            "completionTokens",
+            "totalTokens"
+           ],
+           "additionalProperties": false
+          },
+          "pendingApproval": {
+           "type": "boolean"
+          },
+          "redactions": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          }
+         },
+         "required": [
+          "reply",
+          "agent",
+          "via",
+          "provider",
+          "toolTraces",
+          "usage",
+          "pendingApproval",
+          "redactions"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "userId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "^[A-Za-z0-9:_.-]+$"
+         },
+         "initData": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 8192
+         },
+         "role": {
+          "default": "user",
+          "type": "string",
+          "enum": [
+           "user",
+           "staff"
+          ]
+         },
+         "text": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 4000
+         },
+         "language": {
+          "default": "fa",
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 16
+         },
+         "directAgent": {
+          "type": "string",
+          "enum": [
+           "orchestrator",
+           "receptionist",
+           "sales",
+           "support",
+           "analyst",
+           "content"
+          ]
+         },
+         "history": {
+          "maxItems": 10,
+          "type": "array",
+          "items": {
+           "type": "object",
+           "properties": {
+            "role": {
+             "type": "string",
+             "enum": [
+              "user",
+              "assistant"
+             ]
+            },
+            "content": {
+             "type": "string",
+             "minLength": 1,
+             "maxLength": 2000
+            }
+           },
+           "required": [
+            "role",
+            "content"
+           ]
+          }
+         },
+         "knowledge": {
+          "type": "string",
+          "maxLength": 4000
+         }
+        },
+        "required": [
+         "userId",
+         "text"
+        ]
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ai/agents": {
+   "get": {
+    "operationId": "aiAgents",
+    "summary": "The 6 Zenovix agents with the skills each one may call",
+    "tags": [
+     "ai"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "name": {
+              "type": "string",
+              "enum": [
+               "orchestrator",
+               "receptionist",
+               "sales",
+               "support",
+               "analyst",
+               "content"
+              ]
+             },
+             "emoji": {
+              "type": "string"
+             },
+             "titleFa": {
+              "type": "string"
+             },
+             "titleEn": {
+              "type": "string"
+             },
+             "description": {
+              "type": "string"
+             },
+             "skills": {
+              "type": "array",
+              "items": {
+               "type": "string"
+              }
+             }
+            },
+            "required": [
+             "name",
+             "emoji",
+             "titleFa",
+             "titleEn",
+             "description",
+             "skills"
+            ],
+            "additionalProperties": false
+           }
+          }
+         },
+         "required": [
+          "items"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ai/skills": {
+   "get": {
+    "operationId": "aiSkills",
+    "summary": "The 16 KIA-OS skills with authorization metadata",
+    "tags": [
+     "ai"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "items": {
+           "type": "array",
+           "items": {
+            "type": "object",
+            "properties": {
+             "id": {
+              "type": "string"
+             },
+             "kind": {
+              "type": "string",
+              "enum": [
+               "read",
+               "write",
+               "money",
+               "staff"
+              ]
+             },
+             "titleFa": {
+              "type": "string"
+             },
+             "titleEn": {
+              "type": "string"
+             },
+             "description": {
+              "type": "string"
+             },
+             "allowedAgents": {
+              "type": "array",
+              "items": {
+               "type": "string",
+               "enum": [
+                "orchestrator",
+                "receptionist",
+                "sales",
+                "support",
+                "analyst",
+                "content"
+               ]
+              }
+             },
+             "staffOnly": {
+              "type": "boolean"
+             }
+            },
+            "required": [
+             "id",
+             "kind",
+             "titleFa",
+             "titleEn",
+             "description",
+             "allowedAgents",
+             "staffOnly"
+            ],
+            "additionalProperties": false
+           }
+          }
+         },
+         "required": [
+          "items"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/ai/usage": {
+   "get": {
+    "operationId": "aiUsage",
+    "summary": "Per-user token usage against the daily cap (admin key required)",
+    "tags": [
+     "ai"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "userId": {
+           "type": "string"
+          },
+          "usedToday": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "cap": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          },
+          "remainingToday": {
+           "type": "integer",
+           "minimum": 0,
+           "maximum": 9007199254740991
+          }
+         },
+         "required": [
+          "userId",
+          "usedToday",
+          "cap",
+          "remainingToday"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "userId",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/brand": {
+   "get": {
+    "operationId": "getBrand",
+    "summary": "White-label shell branding (BRAND_NAME / BRAND_TAGLINE env → defaults)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "name": {
+             "type": "string",
+             "minLength": 1
+            },
+            "tagline": {
+             "type": "string"
+            }
+           },
+           "required": [
+            "name",
+            "tagline"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/overview": {
+   "get": {
+    "operationId": "getOverview",
+    "summary": "24h KPIs + 14-day series + top products + recent orders, derived from live tables",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "users": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "products": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "orders": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "revenueStars": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "revenueCredits": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "pendingApprovals": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "aiCalls": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "series": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "date": {
+                "type": "string",
+                "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+               },
+               "revenue": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "orders": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               }
+              },
+              "required": [
+               "date",
+               "revenue",
+               "orders"
+              ],
+              "additionalProperties": false
+             }
+            },
+            "topProducts": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "title": {
+                "type": "string"
+               },
+               "salesCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               }
+              },
+              "required": [
+               "title",
+               "salesCount"
+              ],
+              "additionalProperties": false
+             }
+            },
+            "recentOrders": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "title": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "buyer": {
+                "type": "object",
+                "properties": {
+                 "name": {
+                  "anyOf": [
+                   {
+                    "type": "string"
+                   },
+                   {
+                    "type": "null"
+                   }
+                  ]
+                 },
+                 "username": {
+                  "anyOf": [
+                   {
+                    "type": "string"
+                   },
+                   {
+                    "type": "null"
+                   }
+                  ]
+                 }
+                },
+                "required": [
+                 "name",
+                 "username"
+                ],
+                "additionalProperties": false
+               },
+               "totalStars": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "totalCredits": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "status": {
+                "type": "string"
+               },
+               "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+               }
+              },
+              "required": [
+               "id",
+               "title",
+               "buyer",
+               "totalStars",
+               "totalCredits",
+               "status",
+               "createdAt"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "users",
+            "products",
+            "orders",
+            "revenueStars",
+            "revenueCredits",
+            "pendingApprovals",
+            "aiCalls",
+            "series",
+            "topProducts",
+            "recentOrders"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/products": {
+   "get": {
+    "operationId": "listDashProducts",
+    "summary": "Market listings for the command center (public read, q search, limit/offset)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "sellerId": {
+                "type": "string"
+               },
+               "title": {
+                "type": "string"
+               },
+               "description": {
+                "type": "string"
+               },
+               "category": {
+                "type": "string"
+               },
+               "priceStars": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "priceCredits": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "stock": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+               },
+               "salesCount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "featured": {
+                "type": "boolean"
+               },
+               "status": {
+                "type": "string",
+                "enum": [
+                 "active",
+                 "archived"
+                ]
+               },
+               "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+               }
+              },
+              "required": [
+               "id",
+               "sellerId",
+               "title",
+               "description",
+               "category",
+               "priceStars",
+               "priceCredits",
+               "stock",
+               "salesCount",
+               "featured",
+               "status",
+               "createdAt"
+              ],
+              "additionalProperties": false
+             }
+            },
+            "total": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "limit": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "offset": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "items",
+            "total",
+            "limit",
+            "offset"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 12,
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100
+      }
+     },
+     {
+      "name": "offset",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 0,
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991
+      }
+     },
+     {
+      "name": "q",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "maxLength": 80
+      }
+     }
+    ]
+   },
+   "post": {
+    "operationId": "createDashProduct",
+    "summary": "Create a house listing (seller = treasury); Stars are not a ledger rail — credits only",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "201": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "title": {
+             "type": "string"
+            },
+            "description": {
+             "type": "string"
+            },
+            "category": {
+             "type": "string"
+            },
+            "priceStars": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "priceCredits": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "stock": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "salesCount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "featured": {
+             "type": "boolean"
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "active",
+              "archived"
+             ]
+            },
+            "createdAt": {
+             "type": "string",
+             "format": "date-time",
+             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            }
+           },
+           "required": [
+            "id",
+            "sellerId",
+            "title",
+            "description",
+            "category",
+            "priceStars",
+            "priceCredits",
+            "stock",
+            "salesCount",
+            "featured",
+            "status",
+            "createdAt"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+         },
+         "category": {
+          "type": "string",
+          "maxLength": 40
+         },
+         "priceStars": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "priceCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "stock": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "featured": {
+          "type": "boolean"
+         },
+         "description": {
+          "type": "string",
+          "maxLength": 800
+         }
+        },
+        "required": [
+         "title"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/products/{id}": {
+   "patch": {
+    "operationId": "updateDashProduct",
+    "summary": "Edit a listing (title/category/description/price/active; stock & stars are dashboard-only views)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "title": {
+             "type": "string"
+            },
+            "description": {
+             "type": "string"
+            },
+            "category": {
+             "type": "string"
+            },
+            "priceStars": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "priceCredits": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "stock": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "salesCount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "featured": {
+             "type": "boolean"
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "active",
+              "archived"
+             ]
+            },
+            "createdAt": {
+             "type": "string",
+             "format": "date-time",
+             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            }
+           },
+           "required": [
+            "id",
+            "sellerId",
+            "title",
+            "description",
+            "category",
+            "priceStars",
+            "priceCredits",
+            "stock",
+            "salesCount",
+            "featured",
+            "status",
+            "createdAt"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "title": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+         },
+         "category": {
+          "type": "string",
+          "maxLength": 40
+         },
+         "priceStars": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "priceCredits": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 9007199254740991
+         },
+         "stock": {
+          "type": "integer",
+          "minimum": -9007199254740991,
+          "maximum": 9007199254740991
+         },
+         "featured": {
+          "type": "boolean"
+         },
+         "description": {
+          "type": "string",
+          "maxLength": 800
+         },
+         "active": {
+          "type": "boolean"
+         }
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   },
+   "delete": {
+    "operationId": "archiveDashProduct",
+    "summary": "Archive a listing (soft — the row stays for ledger/escrow references)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "sellerId": {
+             "type": "string"
+            },
+            "title": {
+             "type": "string"
+            },
+            "description": {
+             "type": "string"
+            },
+            "category": {
+             "type": "string"
+            },
+            "priceStars": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "priceCredits": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "stock": {
+             "type": "integer",
+             "minimum": -9007199254740991,
+             "maximum": 9007199254740991
+            },
+            "salesCount": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            },
+            "featured": {
+             "type": "boolean"
+            },
+            "status": {
+             "type": "string",
+             "enum": [
+              "active",
+              "archived"
+             ]
+            },
+            "createdAt": {
+             "type": "string",
+             "format": "date-time",
+             "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+            }
+           },
+           "required": [
+            "id",
+            "sellerId",
+            "title",
+            "description",
+            "category",
+            "priceStars",
+            "priceCredits",
+            "stock",
+            "salesCount",
+            "featured",
+            "status",
+            "createdAt"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/orders": {
+   "get": {
+    "operationId": "listDashOrders",
+    "summary": "Escrow marketplace orders in dashboard shapes (status filter + paging)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "product": {
+                "type": "string"
+               },
+               "buyer": {
+                "type": "object",
+                "properties": {
+                 "name": {
+                  "anyOf": [
+                   {
+                    "type": "string"
+                   },
+                   {
+                    "type": "null"
+                   }
+                  ]
+                 },
+                 "username": {
+                  "anyOf": [
+                   {
+                    "type": "string"
+                   },
+                   {
+                    "type": "null"
+                   }
+                  ]
+                 }
+                },
+                "required": [
+                 "name",
+                 "username"
+                ],
+                "additionalProperties": false
+               },
+               "totalStars": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "totalCredits": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "status": {
+                "type": "string"
+               },
+               "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+               }
+              },
+              "required": [
+               "id",
+               "product",
+               "buyer",
+               "totalStars",
+               "totalCredits",
+               "status",
+               "createdAt"
+              ],
+              "additionalProperties": false
+             }
+            },
+            "total": {
+             "type": "integer",
+             "minimum": 0,
+             "maximum": 9007199254740991
+            }
+           },
+           "required": [
+            "items",
+            "total"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 20,
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 100
+      }
+     },
+     {
+      "name": "offset",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 0,
+       "type": "integer",
+       "minimum": 0,
+       "maximum": 9007199254740991
+      }
+     },
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": "all",
+       "type": "string",
+       "enum": [
+        "all",
+        "paid",
+        "pending",
+        "delivered",
+        "refunded",
+        "cancelled"
+       ]
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/orders/{id}/status": {
+   "post": {
+    "operationId": "dashOrderAction",
+    "summary": "deliver → DELIVERED (from FUNDED) · cancel → CANCELLED (from CREATED) · refund → REFUNDED (from DISPUTED)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "status": {
+             "type": "string"
+            }
+           },
+           "required": [
+            "id",
+            "status"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "action": {
+          "type": "string",
+          "enum": [
+           "deliver",
+           "cancel",
+           "refund"
+          ]
+         }
+        },
+        "required": [
+         "action"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/users": {
+   "get": {
+    "operationId": "listDashUsers",
+    "summary": "User accounts (kind=user) for the wallets→users subtab",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "name": {
+                "type": "string"
+               },
+               "username": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "role": {
+                "type": "string"
+               },
+               "language": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+               }
+              },
+              "required": [
+               "id",
+               "name",
+               "username",
+               "role",
+               "language",
+               "createdAt"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 100,
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 200
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/wallets": {
+   "get": {
+    "operationId": "listDashWallets",
+    "summary": "Derived balances + escrow-locked amounts per user account",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "name": {
+                "type": "string"
+               },
+               "username": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "role": {
+                "type": "string"
+               },
+               "balance": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+               },
+               "locked": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "credits": {
+                "type": "integer",
+                "minimum": -9007199254740991,
+                "maximum": 9007199254740991
+               }
+              },
+              "required": [
+               "name",
+               "username",
+               "role",
+               "balance",
+               "locked",
+               "credits"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 100,
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 200
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/quests": {
+   "get": {
+    "operationId": "listDashQuests",
+    "summary": "Quest rail — empty until the quest engine ships (renders a clean empty state)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "propertyNames": {
+               "type": "string"
+              },
+              "additionalProperties": {}
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/bookings": {
+   "get": {
+    "operationId": "listDashBookings",
+    "summary": "Bookings rail — empty until the booking engine ships (renders a clean empty state)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "propertyNames": {
+               "type": "string"
+              },
+              "additionalProperties": {}
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    }
+   }
+  },
+  "/leaderboard": {
+   "get": {
+    "operationId": "dashLeaderboard",
+    "summary": "sales = settled escrows per seller (real); xp/ref rails ship with the quest engine",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "rank": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "name": {
+                "type": "string"
+               },
+               "username": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "xp": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "sales": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "refs": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               }
+              },
+              "required": [
+               "rank",
+               "name",
+               "username",
+               "xp",
+               "sales",
+               "refs"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "type",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": "xp",
+       "type": "string",
+       "enum": [
+        "xp",
+        "sales",
+        "ref"
+       ]
+      }
+     },
+     {
+      "name": "limit",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": 25,
+       "type": "integer",
+       "minimum": 1,
+       "maximum": 50
+      }
+     }
+    ]
+   }
+  },
+  "/approvals": {
+   "get": {
+    "operationId": "listDashApprovals",
+    "summary": "HITL queue in dashboard shapes (risk level derives from the charter threshold)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "type": {
+                "type": "string"
+               },
+               "riskLevel": {
+                "type": "string",
+                "enum": [
+                 "low",
+                 "medium",
+                 "high"
+                ]
+               },
+               "summary": {
+                "type": "string"
+               },
+               "note": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "amount": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 9007199254740991
+               },
+               "status": {
+                "type": "string"
+               },
+               "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+               },
+               "expiresAt": {
+                "anyOf": [
+                 {
+                  "type": "string",
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               }
+              },
+              "required": [
+               "id",
+               "type",
+               "riskLevel",
+               "summary",
+               "note",
+               "amount",
+               "status",
+               "createdAt",
+               "expiresAt"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "status",
+      "in": "query",
+      "required": false,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "default": "pending",
+       "type": "string",
+       "enum": [
+        "pending",
+        "approved",
+        "rejected",
+        "expired",
+        "all"
+       ]
+      }
+     }
+    ],
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/approvals/{id}/decide": {
+   "post": {
+    "operationId": "dashApprovalDecision",
+    "summary": "Approve settles the escrow in the same transaction; reject locks it for arbitration",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "id": {
+             "type": "string"
+            },
+            "status": {
+             "type": "string"
+            },
+            "escrowId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            },
+            "txId": {
+             "anyOf": [
+              {
+               "type": "string"
+              },
+              {
+               "type": "null"
+              }
+             ]
+            }
+           },
+           "required": [
+            "id",
+            "status",
+            "escrowId",
+            "txId"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "parameters": [
+     {
+      "name": "id",
+      "in": "path",
+      "required": true,
+      "schema": {
+       "$schema": "https://json-schema.org/draft/2020-12/schema",
+       "type": "string",
+       "minLength": 1,
+       "maxLength": 128,
+       "pattern": "^[A-Za-z0-9:_.-]+$"
+      }
+     }
+    ],
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "approve": {
+          "type": "boolean"
+         },
+         "note": {
+          "type": "string",
+          "maxLength": 500
+         }
+        },
+        "required": [
+         "approve"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/settings": {
+   "get": {
+    "operationId": "listDashSettings",
+    "summary": "Runtime settings — empty until the KV model ships (brand lives in env today)",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "key": {
+                "type": "string"
+               },
+               "value": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "key",
+               "value"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   },
+   "put": {
+    "operationId": "putDashSetting",
+    "summary": "501 until the KV model ships — honest refusal beats a silent no-op",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "items": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "key": {
+                "type": "string"
+               },
+               "value": {
+                "type": "string"
+               }
+              },
+              "required": [
+               "key",
+               "value"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "items"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "requestBody": {
+     "required": true,
+     "content": {
+      "application/json": {
+       "schema": {
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "object",
+        "properties": {
+         "key": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+         },
+         "value": {
+          "type": "string",
+          "maxLength": 2000
+         }
+        },
+        "required": [
+         "key",
+         "value"
+        ]
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  },
+  "/security": {
+   "get": {
+    "operationId": "dashSecurity",
+    "summary": "Live defense-in-depth layers (real config flags) + the audit trail tail",
+    "tags": [
+     "dashboard"
+    ],
+    "responses": {
+     "200": {
+      "description": "Success",
+      "content": {
+       "application/json": {
+        "schema": {
+         "$schema": "https://json-schema.org/draft/2020-12/schema",
+         "type": "object",
+         "properties": {
+          "ok": {
+           "type": "boolean",
+           "const": true
+          },
+          "data": {
+           "type": "object",
+           "properties": {
+            "layers": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "name": {
+                "type": "string"
+               },
+               "description": {
+                "type": "string"
+               },
+               "active": {
+                "type": "boolean"
+               }
+              },
+              "required": [
+               "id",
+               "name",
+               "active"
+              ],
+              "additionalProperties": false
+             }
+            },
+            "audit": {
+             "type": "array",
+             "items": {
+              "type": "object",
+              "properties": {
+               "id": {
+                "type": "string"
+               },
+               "actor": {
+                "type": "string"
+               },
+               "action": {
+                "type": "string"
+               },
+               "target": {
+                "anyOf": [
+                 {
+                  "type": "string"
+                 },
+                 {
+                  "type": "null"
+                 }
+                ]
+               },
+               "status": {
+                "type": "string"
+               },
+               "createdAt": {
+                "type": "string",
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$"
+               }
+              },
+              "required": [
+               "id",
+               "actor",
+               "action",
+               "target",
+               "status",
+               "createdAt"
+              ],
+              "additionalProperties": false
+             }
+            }
+           },
+           "required": [
+            "layers",
+            "audit"
+           ],
+           "additionalProperties": false
+          }
+         },
+         "required": [
+          "ok",
+          "data"
+         ],
+         "additionalProperties": false
+        }
+       }
+      }
+     },
+     "4XX": {
+      "description": "Domain or validation failure",
+      "content": {
+       "application/json": {
+        "schema": {
+         "type": "object",
+         "properties": {
+          "error": {
+           "type": "object",
+           "properties": {
+            "code": {
+             "type": "string"
+            },
+            "message": {
+             "type": "string"
+            },
+            "meta": {
+             "type": "object",
+             "additionalProperties": {
+              "type": [
+               "string",
+               "number"
+              ]
+             }
+            }
+           },
+           "required": [
+            "code",
+            "message"
+           ]
+          }
+         },
+         "required": [
+          "error"
+         ]
+        }
+       }
+      }
+     }
+    },
+    "security": [
+     {
+      "kiaAdminKey": []
+     }
+    ]
+   }
+  }
+ }
+}

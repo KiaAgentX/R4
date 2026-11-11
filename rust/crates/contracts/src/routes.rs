@@ -1,0 +1,710 @@
+//! رجیستری ۴۶ مسیر v3 — کپی مو‌به‌مو از `API_ROUTES` در `server/src/api.ts`
+//! (فقط متادیتا؛ هندلرها در فاز ۴ روی Axum سیم می‌شوند).
+//!
+//! «یک تعریف به ازای هر endpoint»: قرارداد (اسکیمای utoipa) + امنیت + خلاصه +
+//! کد موفقیت — همان قاعدهٔ ADR-005 که قرارداد نتواند از هندلر فاصله بگیرد.
+//! ترتیب مسیرها عین TS است (ترتیب تگ‌های سند از همین‌جا می‌آید).
+
+use utoipa::PartialSchema;
+
+use crate::ai::{
+    AiAgentsListResponse, AiChatRequest, AiChatResponse, AiSkillsListResponse, AiUsageView,
+};
+use crate::common::{DIN_MAX, ID_PATTERN};
+use crate::dashboard::{
+    ApprovalDecisionRequest, ApprovalDecisionResponse, ApprovalListResponse, BrandResponse,
+    DashUserListResponse, DashWalletListResponse, CreateProductRequest, OrderActionRequest,
+    OrderActionResponse, OrderListResponse, OverviewResponse, ProductListResponse,
+    ProductMutationResponse, SecurityResponse, SettingsListResponse, SettingsPutRequest,
+    UpdateProductRequest,
+};
+use crate::escrows::{
+    CancelEscrowRequest, CreateEscrowRequest, DeliverEscrowRequest, DisputeEscrowRequest,
+    EscrowActionResponse, EscrowListResponse, EscrowView, ExpireEscrowRequest, FundEscrowRequest,
+    RefundEscrowRequest, ReleaseEscrowRequest,
+};
+use crate::economy::EconomySummary;
+use crate::hitl::{
+    CreateHitlRequest, HitlActionResponse, HitlDecisionRequest, HitlListResponse, HitlSweepResponse,
+    HitlView,
+};
+use crate::openapi::{ApiRouteDef, Method, Param, Security};
+use crate::system::{BackupCreated, HealthResponse};
+use crate::wallet::{BurnRequest, MintRequest, WalletMoveResponse};
+use crate::accounts::{
+    AccountListResponse, AccountView, BalanceResponse, CreateAccountRequest,
+};
+
+// ── سازنده‌های اسکیمای پارامتر — دقیقاً خروجی zod برای همان فیلد ─────────────
+
+/// پارامتر path `id` — همان `z.object({ id: idSchema })`.
+fn id_param() -> Param {
+    Param {
+        name: "id",
+        location: "path",
+        required: true,
+        schema: serde_json::json!({
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 128,
+            "pattern": ID_PATTERN,
+        }),
+    }
+}
+
+/// کوئری `status` اختیاری با مقادیر داده‌شده.
+fn status_query(values: &[&str]) -> Param {
+    Param {
+        name: "status",
+        location: "query",
+        required: false,
+        schema: serde_json::json!({ "type": "string", "enum": values }),
+    }
+}
+
+/// کوئری `status` اختیاری با پیش‌فرض (داشبورد).
+fn status_query_default(values: &[&str], default: &str) -> Param {
+    Param {
+        name: "status",
+        location: "query",
+        required: false,
+        schema: serde_json::json!({ "default": default, "type": "string", "enum": values }),
+    }
+}
+
+/// کوئری `limit` با پیش‌فرض و بازه — `z.coerce.number().int().min(..).max(..).default(..)`.
+fn limit_query(default: i64, min: i64, max: i64) -> Param {
+    Param {
+        name: "limit",
+        location: "query",
+        required: false,
+        schema: serde_json::json!({
+            "default": default,
+            "type": "integer",
+            "minimum": min,
+            "maximum": max,
+        }),
+    }
+}
+
+/// کوئری `offset` با پیش‌فرض ۰.
+fn offset_query() -> Param {
+    Param {
+        name: "offset",
+        location: "query",
+        required: false,
+        schema: serde_json::json!({
+            "default": 0,
+            "type": "integer",
+            "minimum": 0,
+            "maximum": DIN_MAX as f64,
+        }),
+    }
+}
+
+/// کوئری `type` لیدربورد.
+fn leaderboard_type_query() -> Param {
+    Param {
+        name: "type",
+        location: "query",
+        required: false,
+        schema: serde_json::json!({ "default": "xp", "type": "string", "enum": ["xp", "sales", "ref"] }),
+    }
+}
+
+// ── رجیستری ─────────────────────────────────────────────────────────────────
+
+/// رجیستری کامل ۴۶ مسیر — ترتیب عین `API_ROUTES` سرور TS.
+#[must_use]
+pub fn api_routes() -> Vec<ApiRouteDef> {
+    let escrow_status_values: &[&str] = &[
+        "CREATED", "FUNDED", "DELIVERED", "RELEASED", "DISPUTED", "REFUNDED", "CANCELLED", "EXPIRED",
+    ];
+    let hitl_status_values: &[&str] = &["PENDING", "APPROVED", "REJECTED", "EXPIRED"];
+
+    vec![
+        // ── system / meta ──
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/health",
+            operation_id: "health",
+            summary: "Liveness probe of the v3 server",
+            tag: "system",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <HealthResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/economy",
+            operation_id: "getEconomy",
+            summary: "Nation economy summary — public transparency (charter Article 6)",
+            tag: "economy",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <EconomySummary as PartialSchema>::schema(),
+            status: 200,
+        },
+        // ── accounts ──
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/accounts",
+            operation_id: "createAccount",
+            summary: "Register a user account (balance starts at 0)",
+            tag: "accounts",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<CreateAccountRequest as PartialSchema>::schema()),
+            response: <AccountView as PartialSchema>::schema(),
+            status: 201,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/accounts",
+            operation_id: "listAccounts",
+            summary: "List all accounts with derived balances",
+            tag: "accounts",
+            security: Security::Admin,
+            params: vec![],
+            body: None,
+            response: <AccountListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/accounts/{id}/balance",
+            operation_id: "getBalance",
+            summary: "Derived balance of one account (public transparency)",
+            tag: "accounts",
+            security: Security::Public,
+            params: vec![id_param()],
+            body: None,
+            response: <BalanceResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        // ── wallet ──
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/wallet/mint",
+            operation_id: "mint",
+            summary: "Mint dinar into a user account — yearly cap enforced (charter Article 3)",
+            tag: "wallet",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<MintRequest as PartialSchema>::schema()),
+            response: <WalletMoveResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/wallet/burn",
+            operation_id: "burn",
+            summary: "Burn dinar from a user account — overdraft-impossible (charter Article 4)",
+            tag: "wallet",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<BurnRequest as PartialSchema>::schema()),
+            response: <WalletMoveResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        // ── escrows ──
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows",
+            operation_id: "createEscrow",
+            summary: "Create an escrow (CREATED; money not moved yet)",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<CreateEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 201,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/escrows",
+            operation_id: "listEscrows",
+            summary: "List escrows (optionally filtered by status)",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![status_query(escrow_status_values)],
+            body: None,
+            response: <EscrowListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/escrows/{id}",
+            operation_id: "getEscrow",
+            summary: "Read one escrow (public transparency)",
+            tag: "escrows",
+            security: Security::Public,
+            params: vec![id_param()],
+            body: None,
+            response: <EscrowView as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/fund",
+            operation_id: "fundEscrow",
+            summary: "Lock buyer money into the escrow account",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<FundEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/deliver",
+            operation_id: "deliverEscrow",
+            summary: "Mark the product as delivered (money still locked)",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<DeliverEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/release",
+            operation_id: "releaseEscrow",
+            summary: "Settle: seller gets net (90%), treasury gets tax (10%) — HITL gate ≥ 50,000 Đ",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<ReleaseEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/dispute",
+            operation_id: "disputeEscrow",
+            summary: "Open a dispute (escrow stays locked until arbitration)",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<DisputeEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/refund",
+            operation_id: "refundEscrow",
+            summary: "Arbitration in favor of the buyer — full refund, no tax",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<RefundEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/cancel",
+            operation_id: "cancelEscrow",
+            summary: "Cancel a CREATED escrow — no money ever moved",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<CancelEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/escrows/{id}/expire",
+            operation_id: "expireEscrow",
+            summary: "TTL sweep — auto-refund a FUNDED escrow (charter Article 9)",
+            tag: "escrows",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<ExpireEscrowRequest as PartialSchema>::schema()),
+            response: <EscrowActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        // ── hitl ──
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/hitl",
+            operation_id: "createHitlRequest",
+            summary: "Queue a human-approval request (amount copied from the escrow; duplicate id → replay)",
+            tag: "hitl",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<CreateHitlRequest as PartialSchema>::schema()),
+            response: <HitlView as PartialSchema>::schema(),
+            status: 201,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/hitl",
+            operation_id: "listHitlRequests",
+            summary: "List HITL requests (optionally filtered by status)",
+            tag: "hitl",
+            security: Security::Admin,
+            params: vec![status_query(hitl_status_values)],
+            body: None,
+            response: <HitlListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/hitl/{id}",
+            operation_id: "getHitlRequest",
+            summary: "Read one HITL request",
+            tag: "hitl",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: None,
+            response: <HitlView as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/hitl/{id}/approve",
+            operation_id: "approveHitlRequest",
+            summary: "Approve → ESCROW_RELEASE settles in the same transaction (seller 90% + treasury 10%)",
+            tag: "hitl",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<HitlDecisionRequest as PartialSchema>::schema()),
+            response: <HitlActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/hitl/{id}/reject",
+            operation_id: "rejectHitlRequest",
+            summary: "Reject — no money moves; the escrow stays locked until arbitration decides otherwise",
+            tag: "hitl",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<HitlDecisionRequest as PartialSchema>::schema()),
+            response: <HitlActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/hitl/sweep",
+            operation_id: "sweepHitl",
+            summary: "TTL sweep — expire overdue PENDING requests (bots call this on an interval)",
+            tag: "hitl",
+            security: Security::Admin,
+            params: vec![],
+            body: None,
+            response: <HitlSweepResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/system/backup",
+            operation_id: "createBackup",
+            summary: "Consistent SQLite snapshot (VACUUM INTO) into db/backups — prunes to the newest KEEP_BACKUPS files. Admin-gated.",
+            tag: "system",
+            security: Security::Admin,
+            params: vec![],
+            body: None,
+            response: <BackupCreated as PartialSchema>::schema(),
+            status: 200,
+        },
+        // ── ai ──
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/ai/chat",
+            operation_id: "aiChat",
+            summary: "Ask the Zenovix agent team — routing, skills, metering, redaction and audit run server-side",
+            tag: "ai",
+            security: Security::Public,
+            params: vec![],
+            body: Some(<AiChatRequest as PartialSchema>::schema()),
+            response: <AiChatResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/ai/agents",
+            operation_id: "aiAgents",
+            summary: "The 6 Zenovix agents with the skills each one may call",
+            tag: "ai",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <AiAgentsListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/ai/skills",
+            operation_id: "aiSkills",
+            summary: "The 16 KIA-OS skills with authorization metadata",
+            tag: "ai",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <AiSkillsListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/ai/usage",
+            operation_id: "aiUsage",
+            summary: "Per-user token usage against the daily cap (admin key required)",
+            tag: "ai",
+            security: Security::Admin,
+            params: vec![Param {
+                name: "userId",
+                location: "query",
+                required: false,
+                schema: serde_json::json!({ "type": "string", "minLength": 1 }),
+            }],
+            body: None,
+            response: <AiUsageView as PartialSchema>::schema(),
+            status: 200,
+        },
+        // ── dashboard ──
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/brand",
+            operation_id: "getBrand",
+            summary: "White-label shell branding (BRAND_NAME / BRAND_TAGLINE env → defaults)",
+            tag: "dashboard",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <BrandResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/overview",
+            operation_id: "getOverview",
+            summary: "24h KPIs + 14-day series + top products + recent orders, derived from live tables",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![],
+            body: None,
+            response: <OverviewResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/products",
+            operation_id: "listDashProducts",
+            summary: "Market listings for the command center (public read, q search, limit/offset)",
+            tag: "dashboard",
+            security: Security::Public,
+            params: vec![
+                limit_query(12, 1, 100),
+                offset_query(),
+                Param {
+                    name: "q",
+                    location: "query",
+                    required: false,
+                    schema: serde_json::json!({ "type": "string", "maxLength": 80 }),
+                },
+            ],
+            body: None,
+            response: <ProductListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/products",
+            operation_id: "createDashProduct",
+            summary: "Create a house listing (seller = treasury); Stars are not a ledger rail — credits only",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<CreateProductRequest as PartialSchema>::schema()),
+            response: <ProductMutationResponse as PartialSchema>::schema(),
+            status: 201,
+        },
+        ApiRouteDef {
+            method: Method::Patch,
+            path: "/products/{id}",
+            operation_id: "updateDashProduct",
+            summary: "Edit a listing (title/category/description/price/active; stock & stars are dashboard-only views)",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<UpdateProductRequest as PartialSchema>::schema()),
+            response: <ProductMutationResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Delete,
+            path: "/products/{id}",
+            operation_id: "archiveDashProduct",
+            summary: "Archive a listing (soft — the row stays for ledger/escrow references)",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: None,
+            response: <ProductMutationResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/orders",
+            operation_id: "listDashOrders",
+            summary: "Escrow marketplace orders in dashboard shapes (status filter + paging)",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![
+                limit_query(20, 1, 100),
+                offset_query(),
+                status_query_default(&["all", "paid", "pending", "delivered", "refunded", "cancelled"], "all"),
+            ],
+            body: None,
+            response: <OrderListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/orders/{id}/status",
+            operation_id: "dashOrderAction",
+            summary: "deliver → DELIVERED (from FUNDED) · cancel → CANCELLED (from CREATED) · refund → REFUNDED (from DISPUTED)",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<OrderActionRequest as PartialSchema>::schema()),
+            response: <OrderActionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/users",
+            operation_id: "listDashUsers",
+            summary: "User accounts (kind=user) for the wallets→users subtab",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![limit_query(100, 1, 200)],
+            body: None,
+            response: <DashUserListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/wallets",
+            operation_id: "listDashWallets",
+            summary: "Derived balances + escrow-locked amounts per user account",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![limit_query(100, 1, 200)],
+            body: None,
+            response: <DashWalletListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/quests",
+            operation_id: "listDashQuests",
+            summary: "Quest rail — empty until the quest engine ships (renders a clean empty state)",
+            tag: "dashboard",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <crate::dashboard::DashListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/bookings",
+            operation_id: "listDashBookings",
+            summary: "Bookings rail — empty until the booking engine ships (renders a clean empty state)",
+            tag: "dashboard",
+            security: Security::Public,
+            params: vec![],
+            body: None,
+            response: <crate::dashboard::DashListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/leaderboard",
+            operation_id: "dashLeaderboard",
+            summary: "sales = settled escrows per seller (real); xp/ref rails ship with the quest engine",
+            tag: "dashboard",
+            security: Security::Public,
+            params: vec![leaderboard_type_query(), limit_query(25, 1, 50)],
+            body: None,
+            response: <crate::dashboard::LeaderboardResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/approvals",
+            operation_id: "listDashApprovals",
+            summary: "HITL queue in dashboard shapes (risk level derives from the charter threshold)",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![status_query_default(&["pending", "approved", "rejected", "expired", "all"], "pending")],
+            body: None,
+            response: <ApprovalListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Post,
+            path: "/approvals/{id}/decide",
+            operation_id: "dashApprovalDecision",
+            summary: "Approve settles the escrow in the same transaction; reject locks it for arbitration",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![id_param()],
+            body: Some(<ApprovalDecisionRequest as PartialSchema>::schema()),
+            response: <ApprovalDecisionResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/settings",
+            operation_id: "listDashSettings",
+            summary: "Runtime settings — empty until the KV model ships (brand lives in env today)",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![],
+            body: None,
+            response: <SettingsListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Put,
+            path: "/settings",
+            operation_id: "putDashSetting",
+            summary: "501 until the KV model ships — honest refusal beats a silent no-op",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![],
+            body: Some(<SettingsPutRequest as PartialSchema>::schema()),
+            response: <SettingsListResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+        ApiRouteDef {
+            method: Method::Get,
+            path: "/security",
+            operation_id: "dashSecurity",
+            summary: "Live defense-in-depth layers (real config flags) + the audit trail tail",
+            tag: "dashboard",
+            security: Security::Admin,
+            params: vec![],
+            body: None,
+            response: <SecurityResponse as PartialSchema>::schema(),
+            status: 200,
+        },
+    ]
+}
+
+// تأیید زمان کامپایل: شمارش رجیستری با api.ts برابر است.
+#[test]
+fn registry_matches_ts_route_count() {
+    assert_eq!(api_routes().len(), 46, "API_ROUTES TS has 46 operationIds");
+}

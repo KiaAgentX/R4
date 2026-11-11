@@ -1,0 +1,14 @@
+[package]
+name = "dropagentx-bot"
+description = "آداپتور تلگرام — teloxide، ۲۷ هندلر، ۲۵ زبان (فاز ۵)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# فاز ۰: بدون وابستگی خارجی — از فاز بعدی با workspace = true اضافه می‌شود.

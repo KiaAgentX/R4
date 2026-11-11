@@ -1,0 +1,5 @@
+# پین دقیق — همان چیزی که CI و لوکال یکسان اجرا می‌کنند.
+[toolchain]
+channel = "1.99.1"
+profile = "minimal"
+components = ["clippy", "rustfmt"]
