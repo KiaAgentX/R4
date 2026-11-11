@@ -12,11 +12,101 @@
 | 4 | سرور Axum + داشبورد static | ✅ انجام شد | **v5/10** |
 | 5 | بات teloxide + صف HITL (آستانه ۵۰,۰۰۰ Đ) | ✅ انجام شد | **v6/10** |
 | 6 | AI Gateway — ۶ ایجنت، ۱۶ مهارت، سقف و audit | ✅ انجام شد | **v7/10** |
-| 7 | ادغام فرانت + WASM اختیاری | ⬜ | — |
+| 7 | ادغام فرانت + WASM اختیاری | 🔄 در جریان | **v8/10** |
 | 8 | Dual-run → مهاجرت داده → Cut-over | ⬜ | — |
 | 9 | امضای نهایی — تحویل نسخه ۱۰ از ۱۰ | ⬜ | — |
 
 **وضعیت فعلی: v7/10 — گیت‌وی AI کامل (fallback قطعی سه‌اسلات + پاکت JSON سخت + redaction ۹قاعده + سقف روزانه + ممیزی چهاروضعیتی) — کل ورک‌اسپیس ۳۱۷ تست سبز، clippy صفر خطا.**
+
+**فاز ۷ در جریان → تحویل به‌صورت v8/10** (فرمول فاز N → v(N+1)؛ نسخهٔ v7/10 قبلاً به فاز ۶ اختصاص یافته). Step 1 تأیید مالک شد ✅؛ Step 2 (Aurora + i18n + api-client تولیدی) ✅؛ Step 3 (شل راهبردی + static-root ترکیبی) ✅؛ **Step 4 (داشبورد ادمین روی Aurora — هشت بخش §2.5) کامل شد** — در انتظار تأیید مالک برای Step 5. بک‌اند در طول فاز ۷ منجمد است (صفر تغییر مسیر/شکل/enum — ۳۱۷ تست سبز، clippy صفر خطا).
+
+---
+
+## فاز ۷ — ادغام فرانت + WASM اختیاری (v8/10) 🔄 — Stepهای ۱–۴ انجام شد
+
+**Step 1 — ممیزی + نقشهٔ معماری** (`docs/phase7/STEP1-AUDIT.md`):
+
+* **ممیزی فرانت قدیمی** — منابع TS (`front/dashboard` ۶٬۵۱۳ LOC + `front/webapp` ۳٬۰۰۹ LOC) در سندباکس موجود نیستند؛ ممیزی مستند بر پایهٔ ADR-009 §2.3 + سند ساختار نهایی + مشخصات مالک (۳۳ صفحه webapp — نقشهٔ DRAFT).
+* **سطح API منجمد** — ۴۶ عملیات روی ۴۰ مسیر با ستون امنیت رجیستری (ادمین X-KIA-Key / عمومی / گیت هویت AI) فهرست و راستی‌آزمایی شد.
+* **معماری هدف** — `apps/{shell,dashboard,webapp,site,desktop,mobile}` + `packages/{ui,api-client,i18n,domain-wasm}` روی pnpm؛ شل راهبردی `/` با تشخیص Telegram/نقش/زبان؛ Tauri v2 (بدون Electron)؛ static ترکیبی روی ServeDir موجود با فقط تغییر مقدار `STATIC_DIR` — **صفر تغییر کد بک‌اند**.
+* **۱۴ تصمیم ثبت‌شده (D1–D14)** — از جمله: api-client تولیدی از `golden-openapi.json` + تست round-trip زنده؛ کلید idempotency سمت کلاینت با استفادهٔ مجدد در retry؛ دیکشنری خطا آینهٔ i18n بات؛ فونت سلف-هاست Vazirmatn/Inter؛ WASM اختیاری با سقف ۳۰۰KB gzip.
+
+**Step 2 — Aurora + i18n + api-client تولیدی** (`front/` — ریشهٔ workspace pnpm به‌صورت زیرپوشه، جدا از ریشهٔ cargo؛ تصمیم D15):
+
+| قطعه | فایل | توضیح |
+|---|---|---|
+| Aurora توکن‌ها | `front/packages/ui/src/tokens.css` | لایت/دارک با `[data-theme]` + prefers-color-scheme؛ پالت برند، ۸ رنگ ماشین وضعیت اسکرو، فاصله/شعاع/سایه/موشن، تارگت لمس ۴۴px، reduced-motion |
+| فونت سلف-هاست | `front/packages/ui/src/fonts.css` + `fonts/` | Vazirmatn/Inter وریبل woff2 (۲۴۰KB، OFL) با unicode-range و font-display:swap؛ بدون CDN (D9)؛ latin-ext پوشش Đ (U+0110) |
+| پایه + کامپوننت‌ها | `base.css` + `components.css` | فقط logical properties → آینهٔ کامل RTL؛ aur-money با isolate LTR + tabular-nums؛ دکمه/کارت/بج/badge وضعیت/فیلد/جدول/spinner/skeleton/empty/error + اعلان HITL |
+| پل Tailwind 4 | `front/packages/ui/src/tailwind.css` | @theme همان توکن‌های aur-* را به کلاس‌های utility می‌نگشد — یک منبع حقیقت، صفر drift؛ بیلد CLI سبز |
+| پول | `front/packages/ui/src/money.ts` | آینهٔ دقیق `format_din` دامنه (تست `187,672 Đ`)، سقف 2^53−1، `formatSignedDin` با علامت − (U+2212) مثل بات، `escrowSplit` ۹۰/۱۰ با floor مثل mul_bps، آستانهٔ HITL ۵۰٬۰۰۰ Đ |
+| تم و جهت | `theme.ts` + `dir.ts` | سوئیچ دارک/لایت با persist، اعمال lang+dir روی html |
+| لوکال | `front/packages/i18n/src/locale.ts` | پیش‌فرض fa، قانون بات `en*→en`، RTL درجه‌یک |
+| دیکشنری UI | `front/packages/i18n/src/dict.ts` | واژگان یکی بات (امانت/تأمین مالی/آزادسازی…) + برچسب محلی ۸ وضعیت اسکرو + تست پاریتی fa/en |
+| نگاشت خطا | `front/packages/i18n/src/errors.ts` | ۲۰ کد دامنه متن‌به‌متن آینهٔ `crates/bot/src/i18n.rs` + ۲۰ کد وایر سرور + ۳ کد سمت کلاینت؛ کد خام هرگز نمایش نمی‌یابد؛ fallback = متن داخلی بات |
+| تایپ‌های تولیدی | `front/packages/api-client/src/schema.d.ts` | ۳٬۳۱۲ خط با openapi-typescript از گلدن‌فیکسچر (۴۰ مسیر/۴۶ عملیات قفل)؛ تست determinism بایت‌به‌بایت |
+| کلاینت | `front/packages/api-client/src/client.ts` | openapi-fetch تایپ‌شده؛ لایهٔ هویت: X-KIA-Key ادمین + initData تلگرام فقط داخل /ai/chat (D14)؛ `reads` عمومی شهروند؛ baseUrl پیش‌فرض `/api/v1` مثل گلدن |
+| idempotency | `front/packages/api-client/src/idempotency.ts` | ULID دست‌ساز Crockford (۲۶ کاراکتر)؛ ۱۰ عملیات پولی کلید می‌گیرند: یک‌بار به‌ازای هر عمل منطقی، store حافظه/localStorage، استفادهٔ مجدد در retry؛ explicit pin اولویت دارد |
+| پاکت خطا | `front/packages/api-client/src/errors.ts` | parse `{error:{code,message,meta}}`؛ پاکت خراب → MALFORMED_ERROR_BODY؛ شبکه/abort → کد سمت کلاینت؛ `unwrap` تایپ‌شده |
+| گیت D5 | `front/scripts/check-no-raw-urls.mjs` | ممنوعیت URL دستی بیرون api-client — در `pnpm check` |
+| round-trip زنده | `front/scripts/round-trip-live.mjs` | پورت وفادارانهٔ canon() تست گلدن فاز ۳؛ اجرا روی باینری واقعی سرور: **live == golden صفر تغییر شکستن‌دهنده، ۴۰/۴۶** |
+
+**معیارهای پذیرش Step 2 — همه سبز:**
+
+1. **api-client تولیدی از قرارداد منجمد** — schema.d.ts از گلدن تولید و تست determinism تولید دوباره را بایت‌به‌بایت می‌سنجد؛ بدنهٔ ۱۰ عملیات پولی `idempotencyKey` وایر دارد و کلاینت همیشه یک کلید ≥۸ می‌فرستد (سخت‌گیرانه‌تر از اسکیما — D7).
+2. **round-trip زنده در برابر سرور Rust واقعی** — سبز: ۴۰ مسیر / ۴۶ عملیات، همان معیار صفر تغییر شکستن‌دهندهٔ فاز ۳.
+3. **دیکتاتور خطا + پاریتی** — fa/en کلید‌به‌کلید برابر، هر ۴۳ کد (۲۰ دامنه + ۲۰ وایر + ۳ کلاینت) پوشش‌داده و متمایز؛ `۱۸۷٬۶۷۲ Đ` تست‌شده.
+
+**آمار Step 2:** ~۱٬۹۰۰ LOC TS + ~۹۰۰ LOC CSS + ~۹۵۰ LOC تست · **۵۳ تست فرانت سبز (آفلاین)** · typecheck strict پاک · lint:urls پاک · بیلد Tailwind ۴ سبز · بک‌اند دست‌نخورده: ۳۱۷ تست سبز، clippy صفر.
+
+**Step 3 — شل راهبردی + static-root ترکیبی** (`front/apps/shell` + `front/scripts/build-static-root.mjs`):
+
+| قطعه | فایل | توضیح |
+|---|---|---|
+| تشخیص زمینهٔ خالص | `apps/shell/src/detect.ts` | تلگرام فقط با `initData` غیروفارغ؛ نقش = کلید ادمین ذخیره‌شده > شهروند تلگرام > مهمان؛ زبان = ذخیره‌شده > hint تلگرام > navigator > fa (قانون بات)؛ دستگاه با coarse pointer/عرض؛ storage معیوب → fail-closed بی‌کرش |
+| نواحی + manifest | `apps/shell/src/areas.ts` | `/admin/` · `/app/` · `/site/` با slash انتهایی؛ در دسترس‌بودن از `build-manifest.json`؛ غایب = «در گام‌های بعدی» — هرگز صفحهٔ جعلی |
+| UI شل | `apps/shell/src/App.tsx` + `main.tsx` | React 18 + TanStack Query 5؛ چیپ سلامت/برند از کلاینت تولیدی (`reads.health/brand` — نه fetch دستی)؛ سوییچ زبان/تم با persist؛ applyLocale/applyTheme روی html |
+| CSS شل | `apps/shell/src/shell.css` | پل Tailwind 4 با `source(none)` + `@source` مشخص — اسکن کلاس فقط روی این اپ، تولید قطعی |
+| مونتاژ static-root | `scripts/build-static-root.mjs` | بیلد شل → `dist/` (ریشه، base '/') → نواحی بیلدشده در `dist/<area>/` → `build-manifest.json` صادقانه؛ فقط تغییر مقدار `STATIC_DIR` روی سرور |
+| تنظیمات | `vite.config.ts` + `index.html` | Vite 6، base '/'، proxy dev به سرور محلی، اسکریپت تلگرام async با degrade صادقانه |
+
+**معیارهای پذیرش Step 3 — همه سبز:**
+
+1. **تشخیص آفلاین** — ۱۹ تست ماتریس (تلگرام/نقش/زبان/دستگاه + storage معیوب).
+2. **static-root روی سرور واقعی** — `GET /` → ۲۰۰ شل (dir=rtl) · asset → ۲۰۰ · `/build-manifest.json` → ۲۰۰ صادقانه · `/admin/` ساخته‌نشده → ۴۰۴ واقعی (تصمیم فاز ۴ حفظ شد) · `/api/v1/health` → ۲۰۰ — صفر تغییر کد بک‌اند.
+3. **بودجهٔ عملکرد** — شل ۶۶KB gzip زیر سقف ۸۰KB §6؛ مجموع تست فرانت: **۷۲ سبز**.
+
+**آمار Step 3:** ~۵۰۰ LOC اپ شل + ~۹۰ LOC اسکریپت مونتاژ + ~۳۵۰ LOC تست · **۱۹ تست جدید** · بک‌اند دست‌نخورده: ۳۱۷ سبز، clippy صفر.
+
+**Step 4 — داشبورد ادمین روی Aurora** (`front/apps/dashboard` + سیم‌کشی static-root):
+
+| قطعه | فایل | توضیح |
+|---|---|---|
+| گیت ادمین | `src/ui.tsx` (AdminGateView) + `src/App.tsx` | کلید X-KIA-Key فقط در مرورگر (همان `ao-admin-key` شل)؛ راستی‌آزمایی با مسیر ادمین واقعی `GET /overview` — 401 → نامعتبر، 503 `ADMIN_DISABLED` → وضعیت صادقانه؛ fail-closed در برابر storage معیوب |
+| هش‌روتر + lazy | `src/nav.ts` + `src/App.tsx` | هشت بخش §2.5 روی `#/…` (D4 — بدون SPA-fallback سرور)؛ هر بخش chunk تنبل؛ React 18 + TanStack Query 5 + zustand-free |
+| نمای کلی | `src/sections/overview.tsx` | `GET /overview` + `/brand` — کاشی‌های فرماندهی، نمودار CSS سری ۷روزه، پرفروش‌ها، سفارش‌های اخیر با واژگان نسل ۲ |
+| اقتصاد + خزانه | `src/sections/economy.tsx` + `src/money.ts` | `GET /economy` — تراز آزمایشی، Meter سقف ضرب مادهٔ ۳؛ mint/burn با کلید idempotency سمت کلاینت (D7): کلید پایدار به‌ازای اقدام، آزادسازی فقط پس از تسویه، **پاس‌گم‌شده → کلید حفظ می‌شود تا replay به `Tx.n` UNIQUE بخورد** |
+| محصولات | `src/sections/products.tsx` | `GET/POST /products`، `PATCH/DELETE /products/{id}` — آرشیو نرم دو-مرحله‌ای (ArmButton)، جستجوی q، ویژه‌سازی، بازیابی |
+| سفارش‌ها | `src/sections/orders.tsx` | واژگان سفارش نسل ۲ حفظ‌شده (paid/pending/delivered/refunded/cancelled)؛ اقدام‌های deliver/cancel/refund دو-مرحله‌ای؛ کاربران و کیف‌ها (موجودی/امانتی با formatDin) |
+| تأییدها + HITL | `src/sections/approvals.tsx` | `GET/POST /approvals` + صف مادهٔ ۷ (`/hitl`، approve/reject با `decidedBy=admin:dashboard`، sweep)؛ **پیش‌نمایش ۹۰/۱۰ همیشه در ردیف آزادسازیِ در انتظار** (§6 — مالیات هرگز پنهان نیست)؛ مبالغ ≥ ۵۰٬۰۰۰ Đ با بج HITL |
+| رشد | `src/sections/growth.tsx` | فقط‌خواندنی نسل ۲ — جدول امتیازها (xp/sales/ref) + quests/bookings خام و صادقانه (هیچ چیز جعل نمی‌شود) |
+| کنسول AI | `src/sections/ai.tsx` | `GET /ai/usage` با Meter سقف روزانه + ۶ ایجنت و ۱۶ مهارت از رجیستری عمومی |
+| پلتفرم | `src/sections/platform.tsx` | `GET/PUT /settings` — **501 صادقانه**: نتیجهٔ واقعی سرور (متن بومی‌سازی‌شدهٔ `NOT_IMPLEMENTED`) نمایش داده می‌شود، نه موفقیت جعلی؛ امنیت/ممیزی؛ بکاپ دو-مرحله‌ای با حجم و نگه‌داری |
+| واژگان | `packages/i18n/src/dict.ts` | ۱۶۵ کلید تازه fa/en با پاریتی کامل — هیچ کد خام خطایی نمایش نمی‌یابد |
+| مونتاژ | `front/scripts/build-static-root.mjs` | نگاشت area→app (admin→dashboard) + بیلد هر اپ موجود؛ manifest صادقانه: `admin:true`، `app/site:false` |
+| بودجه | `apps/dashboard/scripts/budget.mjs` | دروازهٔ build: initial ≤ 200KB gzip (§6) — الان **78.3KB** |
+
+**معیارهای پذیرش Step 4 — همه سبز:**
+
+1. **هشت بخش روی قرارداد منجمد** — تمام مسیرهای داشبورد §2.5 فقط از کلاینت تولیدی تایپ‌شده (D5 — lint:urls پاک)؛ صفر تغییر بک‌اند: ۳۱۷ تست سبز، clippy صفر خطا.
+2. **صداقت پولی** — پیش‌نمایش ۹۰/۱۰ در ردیف هر آزادسازی در انتظار؛ بج HITL ≥ ۵۰٬۰۰۰ Đ؛ mint/burn با کلید idempotency پایدار-به-ازای-اقدام و آزادسازی فقط پس از تسویه (تست‌شده: خطای پایانی → آزاد، پاس‌گم‌شده → حفظ کلید)؛ double-click با pending قفل می‌شود.
+3. **static-root روی سرور واقعی** — `GET /admin/` → ۲۰۰ داشبورد (base '/admin/')، asset → ۲۰۰، `/build-manifest.json` → `admin:true` صادقانه، `/` → شل، `/api/v1/overview` بدون کلید → 401 `ADMIN_KEY_REQUIRED`، با کلید → 200.
+4. **دولیتی و بودجه** — fa/en پاریتی کامل (۱۶۵ کلید تازه)؛ داشبورد initial **78.3 KB gzip** زیر سقف ۲۰۰KB §6 با تفکیک مسیر (هر بخش chunk جدا)؛ مجموع تست فرانت: **۱۰۱ سبز** (۲۹ تست تازه: روتر/نشست/فرمت/پول/رندر SSR).
+
+**آمار Step 4:** ~۳٬۰۴۰ LOC سورس TS/TSX + ~۱۵۵ LOC CSS + ~۳۸۸ LOC تست · **۲۹ تست جدید** · بک‌اند دست‌نخورده: ۳۱۷ سبز، clippy صفر.
+
+**گام بعدی:** Step 5 — بازطراحی `apps/webapp` (نقشهٔ ۳۳ صفحهٔ Mini App روی Aurora با مسیرهای عمومی + /ai/chat)، پس از تأیید مالک.
+
 
 ---
 

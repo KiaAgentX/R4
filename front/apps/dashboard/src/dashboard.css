@@ -1,0 +1,155 @@
+/* Dashboard stylesheet — Aurora via the workspace packages (one source of
+   truth). Tailwind 4: class scanning pinned to THIS app's sources
+   (source(none) on the bridge import + explicit @source) so utility
+   generation is deterministic — same pattern as apps/shell. */
+@import '@agent-one/ui/tailwind.css' source(none);
+@import '@agent-one/ui/fonts.css';
+@import '@agent-one/ui/tokens.css';
+@import '@agent-one/ui/base.css';
+@import '@agent-one/ui/components.css';
+
+@source '../src/**/*.{ts,tsx}';
+@source '../index.html';
+
+/* ── Dashboard-specific Aurora primitives (app scope, aur-* prefix) ────── */
+
+/* Nav chips — hash router; aria-current drives the active state */
+.aur-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aur-space-2);
+}
+
+.aur-nav__link {
+  display: inline-flex;
+  align-items: center;
+  min-block-size: var(--aur-touch);
+  padding-inline: var(--aur-space-4);
+  border: 1px solid var(--aur-border);
+  border-radius: var(--aur-radius-pill);
+  background: var(--aur-surface);
+  color: var(--aur-text-muted);
+  font-size: var(--aur-text-sm);
+  font-weight: 600;
+  text-decoration: none;
+  transition:
+    background var(--aur-dur) var(--aur-ease),
+    color var(--aur-dur) var(--aur-ease),
+    border-color var(--aur-dur) var(--aur-ease);
+}
+
+.aur-nav__link:hover {
+  background: var(--aur-surface-2);
+  color: var(--aur-text);
+}
+
+.aur-nav__link[aria-current='page'] {
+  background: var(--aur-brand-500);
+  border-color: var(--aur-brand-500);
+  color: var(--aur-text-on-brand);
+}
+
+/* Stat tiles — command center */
+.aur-tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--aur-space-3);
+}
+
+.aur-tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aur-space-1);
+  padding: var(--aur-space-4);
+  background: var(--aur-surface);
+  border: 1px solid var(--aur-border);
+  border-radius: var(--aur-radius-lg);
+  box-shadow: var(--aur-shadow-sm);
+}
+
+.aur-tile__label {
+  font-size: var(--aur-text-xs);
+  font-weight: 700;
+  color: var(--aur-text-muted);
+}
+
+.aur-tile__value {
+  font-size: var(--aur-text-xl);
+  font-weight: 700;
+  color: var(--aur-text);
+}
+
+.aur-tile__sub {
+  font-size: var(--aur-text-xs);
+  color: var(--aur-text-faint);
+}
+
+/* Meter — mint cap / AI usage progress */
+.aur-meter {
+  block-size: 10px;
+  inline-size: 100%;
+  background: var(--aur-surface-2);
+  border-radius: var(--aur-radius-pill);
+  overflow: hidden;
+}
+
+.aur-meter__bar {
+  block-size: 100%;
+  background: var(--aur-brand-500);
+  border-radius: var(--aur-radius-pill);
+  transition: inline-size var(--aur-dur) var(--aur-ease);
+}
+
+/* Simple CSS bar chart (overview series) — no chart library, RTL-safe */
+.aur-bars {
+  display: flex;
+  align-items: stretch;
+  gap: var(--aur-space-2);
+  block-size: 140px;
+  padding-block-end: var(--aur-space-4);
+}
+
+.aur-bars__col {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: var(--aur-space-1);
+  min-inline-size: 0;
+}
+
+.aur-bars__bar {
+  background: linear-gradient(to top, var(--aur-brand-600), var(--aur-brand-400));
+  border-radius: var(--aur-radius-sm) var(--aur-radius-sm) 0 0;
+  min-block-size: 2px;
+}
+
+.aur-bars__label {
+  font-size: var(--aur-text-xs);
+  color: var(--aur-text-faint);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Two-step armed action (money-honesty confirm) */
+.aur-arm {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--aur-space-2);
+  flex-wrap: wrap;
+}
+
+.aur-arm__label {
+  font-size: var(--aur-text-xs);
+  font-weight: 700;
+  color: var(--aur-warning);
+}
+
+/* Filter chips (order status / HITL status / leaderboard type) */
+.aur-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aur-space-2);
+}

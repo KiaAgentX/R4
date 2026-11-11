@@ -1,0 +1,296 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Aurora components — CSS primitives (Phase 7 Step 2)
+   Prefix: aur-*  |  logical properties only → RTL mirrors automatically
+   Touch: ≥ 44px targets  |  Money: isolated LTR + tabular numerals
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Money (Din) — `187,672 Đ` inside RTL text must stay LTR ────────────── */
+.aur-money {
+  direction: ltr;
+  unicode-bidi: isolate;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+  color: var(--aur-money);
+  white-space: nowrap;
+}
+
+.aur-money[data-sign='negative'] {
+  color: var(--aur-money-negative);
+}
+
+.aur-money[data-hitl='true'] {
+  color: var(--aur-money-hitl);
+}
+
+.aur-money__split {
+  display: inline-flex;
+  gap: var(--aur-space-2);
+  flex-wrap: wrap;
+  font-weight: 400;
+  font-size: var(--aur-text-sm);
+  color: var(--aur-text-muted);
+}
+
+/* ── Button ─────────────────────────────────────────────────────────────── */
+.aur-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--aur-space-2);
+  min-block-size: var(--aur-touch);
+  min-inline-size: var(--aur-touch);
+  padding-inline: var(--aur-space-5);
+  border: 1px solid transparent;
+  border-radius: var(--aur-radius-md);
+  font-weight: 600;
+  font-size: var(--aur-text-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    background var(--aur-dur) var(--aur-ease),
+    border-color var(--aur-dur) var(--aur-ease),
+    transform var(--aur-dur-fast) var(--aur-ease);
+}
+
+.aur-btn:active {
+  transform: translateY(1px);
+}
+
+.aur-btn[disabled],
+.aur-btn[aria-disabled='true'] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.aur-btn--primary {
+  background: var(--aur-brand-500);
+  color: var(--aur-text-on-brand);
+}
+
+.aur-btn--primary:hover:not([disabled]) {
+  background: var(--aur-brand-600);
+}
+
+.aur-btn--ghost {
+  background: transparent;
+  border-color: var(--aur-border-strong);
+  color: var(--aur-text);
+}
+
+.aur-btn--ghost:hover:not([disabled]) {
+  background: var(--aur-surface-2);
+}
+
+.aur-btn--danger {
+  background: var(--aur-danger);
+  color: var(--aur-text-on-brand);
+}
+
+.aur-btn--danger:hover:not([disabled]) {
+  filter: brightness(0.92);
+}
+
+.aur-btn--sm {
+  min-block-size: 36px;
+  padding-inline: var(--aur-space-3);
+}
+
+.aur-btn--lg {
+  min-block-size: 52px;
+  font-size: var(--aur-text-md);
+}
+
+/* ── Card ───────────────────────────────────────────────────────────────── */
+.aur-card {
+  background: var(--aur-surface);
+  border: 1px solid var(--aur-border);
+  border-radius: var(--aur-radius-lg);
+  box-shadow: var(--aur-shadow-sm);
+  overflow: hidden;
+}
+
+.aur-card__header {
+  padding: var(--aur-space-4) var(--aur-space-5);
+  border-block-end: 1px solid var(--aur-border);
+  font-weight: 700;
+}
+
+.aur-card__body {
+  padding: var(--aur-space-5);
+}
+
+.aur-card__footer {
+  padding: var(--aur-space-4) var(--aur-space-5);
+  border-block-start: 1px solid var(--aur-border);
+  color: var(--aur-text-muted);
+  font-size: var(--aur-text-sm);
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+.aur-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--aur-space-1);
+  padding-inline: var(--aur-space-2);
+  padding-block: 2px;
+  border-radius: var(--aur-radius-pill);
+  font-size: var(--aur-text-xs);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  background: var(--aur-surface-2);
+  color: var(--aur-text-muted);
+  white-space: nowrap;
+}
+
+.aur-badge--brand  { background: var(--aur-success-bg); color: var(--aur-success); }
+.aur-badge--warning { background: var(--aur-warning-bg); color: var(--aur-warning); }
+.aur-badge--danger  { background: var(--aur-danger-bg); color: var(--aur-danger); }
+.aur-badge--info    { background: var(--aur-info-bg); color: var(--aur-info); }
+.aur-badge--ai      { background: var(--aur-violet-500); color: var(--aur-text-on-brand); }
+
+/* Escrow 8-state badges — value must be the SCREAMING wire state */
+.aur-state-badge {
+  display: inline-flex;
+  align-items: center;
+  padding-inline: var(--aur-space-2);
+  padding-block: 2px;
+  border-radius: var(--aur-radius-pill);
+  font-size: var(--aur-text-xs);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.aur-state-badge[data-state='CREATED']   { background: var(--aur-state-created-bg);   color: var(--aur-state-created); }
+.aur-state-badge[data-state='FUNDED']    { background: var(--aur-state-funded-bg);    color: var(--aur-state-funded); }
+.aur-state-badge[data-state='DELIVERED'] { background: var(--aur-state-delivered-bg); color: var(--aur-state-delivered); }
+.aur-state-badge[data-state='RELEASED']  { background: var(--aur-state-released-bg);  color: var(--aur-state-released); }
+.aur-state-badge[data-state='DISPUTED']  { background: var(--aur-state-disputed-bg);  color: var(--aur-state-disputed); }
+.aur-state-badge[data-state='CANCELLED'] { background: var(--aur-state-cancelled-bg); color: var(--aur-state-cancelled); }
+.aur-state-badge[data-state='EXPIRED']   { background: var(--aur-state-expired-bg);   color: var(--aur-state-expired); }
+.aur-state-badge[data-state='REFUNDED']  { background: var(--aur-state-refunded-bg);  color: var(--aur-state-refunded); }
+
+/* ── Form field ─────────────────────────────────────────────────────────── */
+.aur-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aur-space-2);
+}
+
+.aur-label {
+  font-size: var(--aur-text-sm);
+  font-weight: 600;
+  color: var(--aur-text-muted);
+}
+
+.aur-input {
+  min-block-size: var(--aur-touch);
+  padding-inline: var(--aur-space-4);
+  background: var(--aur-surface);
+  border: 1px solid var(--aur-border-strong);
+  border-radius: var(--aur-radius-md);
+  transition: border-color var(--aur-dur) var(--aur-ease);
+}
+
+.aur-input:focus-visible {
+  border-color: var(--aur-brand-500);
+}
+
+.aur-input[aria-invalid='true'] {
+  border-color: var(--aur-danger);
+}
+
+/* Amount inputs stay LTR even in RTL documents */
+.aur-input--money {
+  direction: ltr;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Table ──────────────────────────────────────────────────────────────── */
+.aur-table {
+  inline-size: 100%;
+  border-collapse: collapse;
+  font-size: var(--aur-text-sm);
+}
+
+.aur-table :is(th, td) {
+  padding: var(--aur-space-3) var(--aur-space-4);
+  text-align: start;
+  border-block-end: 1px solid var(--aur-border);
+}
+
+.aur-table thead th {
+  color: var(--aur-text-muted);
+  font-weight: 700;
+  font-size: var(--aur-text-xs);
+  text-transform: uppercase;
+}
+
+.aur-table tbody tr:hover {
+  background: var(--aur-surface-2);
+}
+
+/* ── Spinner / skeleton / empty / error states (§6: every route ships them) */
+.aur-spinner {
+  inline-size: 22px;
+  block-size: 22px;
+  border: 3px solid var(--aur-border-strong);
+  border-block-start-color: var(--aur-brand-500);
+  border-radius: 50%;
+  animation: aur-spin 700ms linear infinite;
+}
+
+.aur-spinner--inline {
+  inline-size: 16px;
+  block-size: 16px;
+  border-width: 2px;
+}
+
+@keyframes aur-spin {
+  to { transform: rotate(360deg); }
+}
+
+.aur-skeleton {
+  border-radius: var(--aur-radius-sm);
+  background: linear-gradient(
+    100deg,
+    var(--aur-surface-2) 40%,
+    var(--aur-border) 50%,
+    var(--aur-surface-2) 60%
+  );
+  background-size: 200% 100%;
+  animation: aur-shimmer 1.4s ease infinite;
+}
+
+@keyframes aur-shimmer {
+  to { background-position: -200% 0; }
+}
+
+.aur-empty,
+.aur-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--aur-space-3);
+  padding: var(--aur-space-7) var(--aur-space-5);
+  text-align: center;
+  color: var(--aur-text-muted);
+}
+
+.aur-error-state {
+  color: var(--aur-danger);
+}
+
+/* ── HITL notice (≥ 50,000 Đ — art. 7) ──────────────────────────────────── */
+.aur-hitl-notice {
+  display: flex;
+  align-items: center;
+  gap: var(--aur-space-3);
+  padding: var(--aur-space-4);
+  border-radius: var(--aur-radius-md);
+  background: var(--aur-warning-bg);
+  color: var(--aur-warning);
+  font-weight: 600;
+  border: 1px solid color-mix(in srgb, var(--aur-warning) 35%, transparent);
+}

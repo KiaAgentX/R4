@@ -1,0 +1,59 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Aurora ↔ Tailwind CSS 4 bridge (decision D12: "Tailwind 4 for Aurora
+   tokens/utilities"). Apps using Tailwind import this INSTEAD of redefining
+   tokens: the @theme block maps the same --aur-* custom properties, so the
+   utility classes (bg-aur-surface, text-aur-muted, …) resolve to the exact
+   same values as components.css — one source of truth, zero drift.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+@import 'tailwindcss';
+
+@theme {
+  /* brand */
+  --color-aur-brand-300: var(--aur-brand-300);
+  --color-aur-brand-400: var(--aur-brand-400);
+  --color-aur-brand-500: var(--aur-brand-500);
+  --color-aur-brand-600: var(--aur-brand-600);
+  --color-aur-brand-700: var(--aur-brand-700);
+  --color-aur-violet-400: var(--aur-violet-400);
+  --color-aur-violet-500: var(--aur-violet-500);
+  --color-aur-violet-600: var(--aur-violet-600);
+
+  /* surfaces */
+  --color-aur-bg: var(--aur-bg);
+  --color-aur-surface: var(--aur-surface);
+  --color-aur-surface-2: var(--aur-surface-2);
+  --color-aur-border: var(--aur-border);
+  --color-aur-border-strong: var(--aur-border-strong);
+
+  /* text */
+  --color-aur-text: var(--aur-text);
+  --color-aur-muted: var(--aur-text-muted);
+  --color-aur-faint: var(--aur-text-faint);
+  --color-aur-on-brand: var(--aur-text-on-brand);
+
+  /* status */
+  --color-aur-success: var(--aur-success);
+  --color-aur-warning: var(--aur-warning);
+  --color-aur-danger: var(--aur-danger);
+  --color-aur-info: var(--aur-info);
+
+  /* typography */
+  --font-aur-fa: var(--aur-font-fa);
+  --font-aur-en: var(--aur-font-en);
+  --font-aur-mono: var(--aur-font-mono);
+  --text-aur-xs: var(--aur-text-xs);
+  --text-aur-sm: var(--aur-text-sm);
+  --text-aur-md: var(--aur-text-md);
+  --text-aur-lg: var(--aur-text-lg);
+  --text-aur-xl: var(--aur-text-xl);
+  --text-aur-2xl: var(--aur-text-2xl);
+
+  /* radius & shadow */
+  --radius-aur-sm: var(--aur-radius-sm);
+  --radius-aur-md: var(--aur-radius-md);
+  --radius-aur-lg: var(--aur-radius-lg);
+  --shadow-aur-sm: var(--aur-shadow-sm);
+  --shadow-aur-md: var(--aur-shadow-md);
+  --shadow-aur-lg: var(--aur-shadow-lg);
+}

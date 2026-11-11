@@ -1,0 +1,11 @@
+/* Shell stylesheet — Aurora via the workspace packages (one source of truth).
+   Tailwind 4: class scanning pinned to THIS app's sources (source(none) on the
+   bridge import + explicit @source) so utility generation is deterministic. */
+@import '@agent-one/ui/tailwind.css' source(none);
+@import '@agent-one/ui/fonts.css';
+@import '@agent-one/ui/tokens.css';
+@import '@agent-one/ui/base.css';
+@import '@agent-one/ui/components.css';
+
+@source '../src/**/*.{ts,tsx}';
+@source '../index.html';
