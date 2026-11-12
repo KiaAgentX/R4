@@ -1,0 +1,28 @@
+{
+  "name": "@agent-one/webapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Citizen Mini App — Aurora redesign of the 33-page webapp map (STEP1-AUDIT §2.4), hash-routed SPA at /app/. Read-only public views + identity-gated /ai/chat + Telegram bot handoff (D14). Phase 7 Step 5.",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/budget.mjs"
+  },
+  "dependencies": {
+    "@agent-one/api-client": "workspace:*",
+    "@agent-one/i18n": "workspace:*",
+    "@agent-one/ui": "workspace:*",
+    "@tanstack/react-query": "^5.90.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.16",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.6"
+  }
+}

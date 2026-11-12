@@ -1,0 +1,9 @@
+{
+  "name": "hitl_created_201",
+  "status": 201,
+  "content_type": "application/json",
+  "body": "{\"amount\":60000,\"createdAt\":\"<TS>\",\"decidedAt\":null,\"decidedBy\":null,\"decisionNote\":null,\"escrowId\":\"escrow:h1\",\"expiresAt\":\"<TS>\",\"id\":\"hitl:pa1\",\"kind\":\"ESCROW_RELEASE\",\"note\":\"big deal\",\"requesterId\":\"user:p1\",\"status\":\"PENDING\"}",
+  "db": {
+    "escrow:escrow:h1": "DELIVERED"
+  }
+}

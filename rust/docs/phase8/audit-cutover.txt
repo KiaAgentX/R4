@@ -1,0 +1,20 @@
+══════════ cut-over final audit — ADR-009 phase 8 ══════════
+database : docs/phase8/cutover-v3.db
+
+══════════ nation genesis proof — v3 (Rust) ══════════
+database                 : docs/phase8/cutover-v3.db
+accounts                 : 469 (466 users, 0 escrow, system 3)
+funded wallets           : 466
+Σ user wallets           : 187672 Đ   expected 187672 Đ
+Σ all postings           : 0    expected 0 (double-entry closure)
+mint:genesis balance     : -187672 Đ   (never positive)
+treasury:nation balance  : 0 Đ
+burn:void balance        : 0 Đ   (never negative)
+escrow locked            : 0 Đ
+genesis tx               : tx_legacy_genesis
+  memo: legacy genesis — Σ held 187672 Đ (floor per citizen from 187672.8) — legacy tx log implied 187,735.8; stored balances 187,672.8; gap −63.0 resolved: 9×50 purcha…
+
+PROOF OK — every expectation holds.
+
+AUDIT PASS — Σ wallets = 187,672 Đ · trialBalance.balanced = true
+→ مجاز به تگ rust-core-1.0.0 و خاموشی Node (پس از ۲ هفته ۱۰۰٪ سبز).

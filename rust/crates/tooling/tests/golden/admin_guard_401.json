@@ -1,0 +1,7 @@
+{
+  "name": "admin_guard_401",
+  "status": 401,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"ADMIN_KEY_REQUIRED\",\"message\":\"Send the admin key in the X-KIA-Key header.\"}}",
+  "db": {}
+}

@@ -1,0 +1,7 @@
+{
+  "name": "settings_list_empty",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"items\":[]},\"ok\":true}",
+  "db": {}
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@agent-one/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "description": "fa/en dictionaries + RTL flip + error-code map. The 20 domain-code messages mirror crates/bot/src/i18n.rs wording verbatim (D8); raw wire codes never reach the UI.",
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./locale": "./src/locale.ts",
+    "./errors": "./src/errors.ts",
+    "./shell": "./src/area-shell.ts",
+    "./dashboard": "./src/area-dashboard.ts",
+    "./webapp": "./src/area-webapp.ts"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "name": "dashboard_wallets_listed",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"items\":[{\"balance\":1000,\"credits\":1000,\"locked\":0,\"name\":\"parity\",\"role\":\"user\",\"username\":null}]},\"ok\":true}",
+  "db": {
+    "user_wallet_sum": 1000
+  }
+}

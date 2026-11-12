@@ -1,0 +1,10 @@
+{
+  "name": "escrow_expire_refunds",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"escrow\":{\"amount\":7000,\"buyerId\":\"user:p1\",\"createdAt\":\"<TS>\",\"deliveryRef\":null,\"disputeReason\":null,\"expiresAt\":null,\"fundedTxId\":\"tx_2\",\"id\":\"escrow:e7\",\"productRef\":null,\"sellerId\":\"user:p2\",\"settleTxId\":\"tx_3\",\"status\":\"EXPIRED\"},\"replayed\":false,\"txId\":\"tx_3\"}",
+  "db": {
+    "user_wallet_sum": 100000,
+    "escrow:escrow:e7": "EXPIRED"
+  }
+}

@@ -1,0 +1,24 @@
+# DropAgentX desktop — Tauri v2 skeleton (Phase 7 Step 6)
+#
+# Deliberately a STANDALONE workspace root: the repo root carries a stale
+# phase-0 Cargo.toml workspace and `rust/` is the frozen backend — this crate
+# must belong to neither. The empty [workspace] table below pins the boundary
+# so `cargo tauri build` never adopts (or is adopted by) another workspace.
+#
+# Note: `tauri`/`tauri-build` resolve from crates.io on the owner machine —
+# nothing here participates in `cargo clippy/test` of rust/ (frozen backend).
+[package]
+name = "dropagentx-desktop"
+version = "0.1.0"
+edition = "2021"
+description = "DropAgentX desktop shell — Tauri v2 skeleton (Phase 7 Step 6, audit §9)"
+license = "MIT OR Apache-2.0"
+authors = ["KiaAgentX"]
+
+[workspace]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }

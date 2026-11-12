@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Agent-One</title>
+    <meta name="description" content="شل راهبردی Agent-One — تشخیص زمینه و مسیریابی به اپ شهروندان، داشبورد ادمین و سایت" />
+    <!-- PWA (Step 6, STEP1-AUDIT §5/§9): installable shell at the static root -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+    <!-- Safari tab tint follows Aurora light/dark -->
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f6f8f9" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0c1614" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Agent-One" />
+    <!-- Telegram Mini App bridge: detection degrades honestly when blocked -->
+    <script src="https://telegram.org/js/telegram-web-app.js" async></script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

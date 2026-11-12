@@ -1,0 +1,10 @@
+{
+  "name": "escrow_cancel_funded",
+  "status": 422,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"INVALID_TRANSITION\",\"message\":\"Cannot cancel escrow in status FUNDED (only CREATED)\"}}",
+  "db": {
+    "user_wallet_sum": 93000,
+    "escrow:escrow:e6": "FUNDED"
+  }
+}

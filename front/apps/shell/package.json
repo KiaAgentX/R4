@@ -1,0 +1,28 @@
+{
+  "name": "@agent-one/shell",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Strategic index shell — device + Telegram + role + language detection → smart route + role switcher. Phase 7 Step 3 (STEP1-AUDIT §10).",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/budget.mjs"
+  },
+  "dependencies": {
+    "@agent-one/api-client": "workspace:*",
+    "@agent-one/i18n": "workspace:*",
+    "@agent-one/ui": "workspace:*",
+    "@tanstack/react-query": "^5.90.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.16",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
+    "tailwindcss": "^4.1.16",
+    "typescript": "^5.9.3",
+    "vite": "^6.3.6"
+  }
+}

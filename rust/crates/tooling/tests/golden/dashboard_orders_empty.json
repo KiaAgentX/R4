@@ -1,0 +1,7 @@
+{
+  "name": "dashboard_orders_empty",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"items\":[],\"total\":0},\"ok\":true}",
+  "db": {}
+}

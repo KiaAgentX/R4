@@ -1,0 +1,9 @@
+{
+  "name": "escrow_created_201",
+  "status": 201,
+  "content_type": "application/json",
+  "body": "{\"escrow\":{\"amount\":10000,\"buyerId\":\"user:p1\",\"createdAt\":\"<TS>\",\"deliveryRef\":null,\"disputeReason\":null,\"expiresAt\":null,\"fundedTxId\":null,\"id\":\"escrow:e1\",\"productRef\":null,\"sellerId\":\"user:p2\",\"settleTxId\":null,\"status\":\"CREATED\"},\"replayed\":false,\"txId\":null}",
+  "db": {
+    "escrow:escrow:e1": "CREATED"
+  }
+}

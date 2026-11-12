@@ -1,0 +1,11 @@
+{
+  "name": "escrow_release_replay_no_double_pay",
+  "status": 422,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"INVALID_TRANSITION\",\"message\":\"Cannot release escrow in status RELEASED\"}}",
+  "db": {
+    "user_wallet_sum": 199000,
+    "treasury": 1000,
+    "escrow:escrow:e4": "RELEASED"
+  }
+}

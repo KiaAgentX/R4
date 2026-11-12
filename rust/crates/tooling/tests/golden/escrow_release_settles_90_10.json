@@ -1,0 +1,11 @@
+{
+  "name": "escrow_release_settles_90_10",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"escrow\":{\"amount\":10000,\"buyerId\":\"user:p1\",\"createdAt\":\"<TS>\",\"deliveryRef\":null,\"disputeReason\":null,\"expiresAt\":null,\"fundedTxId\":\"tx_3\",\"id\":\"escrow:e3\",\"productRef\":null,\"sellerId\":\"user:p2\",\"settleTxId\":\"tx_4\",\"status\":\"RELEASED\"},\"replayed\":false,\"txId\":\"tx_4\"}",
+  "db": {
+    "user_wallet_sum": 199000,
+    "treasury": 1000,
+    "escrow:escrow:e3": "RELEASED"
+  }
+}

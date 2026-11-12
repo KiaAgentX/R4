@@ -1,0 +1,7 @@
+{
+  "name": "account_duplicate_rejected",
+  "status": 422,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"DUPLICATE_ACCOUNT\",\"message\":\"Account user:p1 already exists.\"}}",
+  "db": {}
+}

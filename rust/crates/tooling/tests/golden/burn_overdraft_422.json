@@ -1,0 +1,9 @@
+{
+  "name": "burn_overdraft_422",
+  "status": 422,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"ACCOUNT_OVERDRAFT\",\"message\":\"Account user:p1 (user) cannot go to -10\",\"meta\":{\"accountId\":\"user:p1\",\"kind\":\"user\",\"newBalance\":-10}}}",
+  "db": {
+    "user_wallet_sum": 0
+  }
+}

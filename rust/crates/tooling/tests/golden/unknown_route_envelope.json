@@ -1,0 +1,7 @@
+{
+  "name": "unknown_route_envelope",
+  "status": 404,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"NOT_FOUND\",\"message\":\"No such route under /api/v1 — see /api/v1/openapi.json\"}}",
+  "db": {}
+}

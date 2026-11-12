@@ -1,0 +1,82 @@
+# Agent-One — Rust workspace (ADR-009)
+# فاز ۰: اسکلت، قواعد بازی، وابستگی‌های پایه قفل‌شده (هنوز ارجاع نمی‌خورند).
+[workspace]
+resolver = "2"
+members = ["crates/*", "xtask"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+authors = ["KiaAgentX"]
+
+# ---------- قواعد سراسری (فورس‌شده) ----------
+[workspace.lints.rust]
+unsafe_code = "forbid"
+missing_docs = "warn"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+unwrap_used = "deny"          # خارج از تست ممنوع (clippy.toml: allow-unwrap-in-tests)
+expect_used = "deny"          # خارج از تست ممنوع
+dbg_macro = "deny"
+todo = "warn"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = true
+
+# ---------- وابستگی‌های پایه — تصمیم ثبت‌شده در ADR-009 ----------
+# در فاز ۰ هیچ کرِیتی به این‌ها ارجاع نمی‌دهد؛ از فاز ۱ به بعد، کرِیت‌ها
+# فقط با `workspace = true` مصرف می‌کنند تا نسخه‌ها از یک‌جا کنترل شود.
+[workspace.dependencies]
+# web / async
+tokio = { version = "1.45", features = ["full"] }
+axum = "0.8"
+tower = "0.5"
+tower-http = { version = "0.6", features = ["fs", "cors", "trace"] }
+# bot — فاز ۵: teloxide فقط «رانر» است (قلب بات بدون آن، ADR-009 §۸٫۵)؛
+# rustls به‌جای native-tls تا با تصمیم reqwest ورک‌اسپیس هم‌راستا بماند
+teloxide = { version = "0.13", default-features = false, features = ["macros", "rustls", "ctrlc_handler"] }
+# persistence — فاز ۲: sqlite (نه postgres). دلیل: دیتابیس واقعی v3 و لگاسی هر دو
+# SQLite است (schema.prisma → provider "sqlite") و dual-run فاز ۸ باید روی «همان
+# فایل» کار کند. اگر روزی Postgres لازم شد، فقط همین یک خط عوض می‌شود؛
+# همه کوئری‌ها پشت `dropagentx-db` پنهان‌اند.
+sqlx = { version = "0.8", features = ["sqlite", "runtime-tokio", "migrate"] }
+# contracts / api
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+utoipa = { version = "5.3", features = ["axum_extras"] }
+# error model یکدست: thiserror در کتابخانه‌ها، anyhow فقط در باینری‌ها
+thiserror = "2.0"
+anyhow = "1.0"
+# observability — فاز ۴: فرمت JSON برای لاگ‌های سرور (همان شکل فعلی)
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+# llm client
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
+# crypto / wallet
+sha2 = "0.10"
+hmac = "0.12"
+hex = "0.4"
+bs58 = "0.5"
+ed25519-dalek = "2.1"
+# فاز ۳ — مقایسهٔ زمان‌ثابت کلید ادمین (X-KIA-Key) — fail-closed بدون نشت زمانی
+subtle = "2.6"
+# تست‌های راند‌تریپ (معادل app.inject فستیفای) — axum::body + tower oneshot
+http-body-util = "0.1"
+# فاز ۶ — ۹ قاعدهٔ redaction با الگوهای کامپایل‌شده
+regex = "1.11"
+# misc
+uuid = { version = "1.16", features = ["v4", "v7", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+# فاز ۸ — property tests درگاه parity (proptest)؛ هش bucket از sha2 بالاست
+proptest = "1.5"
+# ---------- کرِیت‌های داخلی — فقط با path، نسخه از همین‌جا ----------
+dropagentx-domain = { path = "crates/domain" }
+dropagentx-contracts = { path = "crates/contracts" }
+dropagentx-db = { path = "crates/db" }
+dropagentx-bot = { path = "crates/bot" }
+dropagentx-ai = { path = "crates/ai" }
+dropagentx-server = { path = "crates/server" }

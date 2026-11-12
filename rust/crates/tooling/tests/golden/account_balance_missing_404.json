@@ -1,0 +1,7 @@
+{
+  "name": "account_balance_missing_404",
+  "status": 404,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"UNKNOWN_ACCOUNT\",\"message\":\"Account user:ghost does not exist\"}}",
+  "db": {}
+}

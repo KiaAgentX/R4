@@ -1,0 +1,7 @@
+# Capacitor webDir + native projects are generated, never committed
+www/
+android/app/
+android/.capacitor/
+android/gradle/
+ios/App/
+node_modules/

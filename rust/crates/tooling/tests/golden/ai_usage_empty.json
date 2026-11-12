@@ -1,0 +1,7 @@
+{
+  "name": "ai_usage_empty",
+  "status": 400,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"INVALID_REQUEST\",\"message\":\"Invalid request — 1 issue(s).\",\"meta\":{\"issues\":1}}}",
+  "db": {}
+}

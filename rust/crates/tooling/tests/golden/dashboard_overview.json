@@ -1,0 +1,7 @@
+{
+  "name": "dashboard_overview",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"aiCalls\":0,\"orders\":0,\"pendingApprovals\":0,\"products\":0,\"recentOrders\":[],\"revenueCredits\":0,\"revenueStars\":0,\"series\":[{\"date\":\"2026-10-30\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-10-31\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-01\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-02\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-03\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-04\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-05\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-06\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-07\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-08\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-09\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-10\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-11\",\"orders\":0,\"revenue\":0},{\"date\":\"2026-11-12\",\"orders\":0,\"revenue\":0}],\"topProducts\":[],\"users\":0},\"ok\":true}",
+  "db": {}
+}

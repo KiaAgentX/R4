@@ -1,0 +1,14 @@
+# context = ریشهٔ ریپو — فقط چیزهایی که بیلد واقعاً می‌خواهد
+.git
+**/target
+**/node_modules
+**/dist
+download
+tool-results
+scripts
+upload
+skills
+db
+**/*.log
+**/.vite
+**/__pycache__

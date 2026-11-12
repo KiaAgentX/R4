@@ -1,0 +1,7 @@
+{
+  "name": "health_ok",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"ai\":\"disabled\",\"bot\":\"disabled\",\"db\":\"ok\",\"llmConfigured\":false,\"llmModel\":null,\"service\":\"dropagentx-v3-server\",\"status\":\"ok\",\"uptime\":\"<UPTIME>\",\"version\":\"0.1.0\"}",
+  "db": {}
+}

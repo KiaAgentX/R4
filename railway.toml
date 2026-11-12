@@ -1,0 +1,13 @@
+# Railway — استقرار production DropAgentX v3 (تصویر production ریشه)
+# فاز ۹ پس از امضا — ADR-009
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+# ENTRYPOINT داخل Dockerfile — startCommand لازم نیست؛ Railway همان را اجرا می‌کند.
+healthcheckPath = "/api/v1/health"
+healthcheckTimeout = 100
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+numReplicas = 1

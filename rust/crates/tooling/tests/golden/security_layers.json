@@ -1,0 +1,7 @@
+{
+  "name": "security_layers",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"audit\":[],\"layers\":[{\"active\":true,\"description\":\"Fail-closed admin key on every privileged route — constant-time compare.\",\"id\":\"kia-key\",\"name\":\"X-KIA-Key admin gate\"},{\"active\":true,\"description\":\"120 requests/minute — separate trusted bucket for admin callers.\",\"id\":\"rate-limit\",\"name\":\"Sliding-window rate limit\"},{\"active\":false,\"description\":\"Official WebApp HMAC-SHA256 verification for public AI callers.\",\"id\":\"telegram-init-data\",\"name\":\"Telegram initData HMAC\"},{\"active\":true,\"description\":\"Every money command writes an audit row inside the same transaction.\",\"id\":\"audit-log\",\"name\":\"Audit trail\"},{\"active\":true,\"description\":\"Double-entry Σ=0, overdraft-impossible balances, derived-only balances.\",\"id\":\"ledger-invariants\",\"name\":\"Ledger invariants\"}]},\"ok\":true}",
+  "db": {}
+}

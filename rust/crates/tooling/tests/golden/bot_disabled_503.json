@@ -1,0 +1,7 @@
+{
+  "name": "bot_disabled_503",
+  "status": 503,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"BOT_DISABLED\",\"message\":\"Bot webhook is disabled — set BOT_WEBHOOK_SECRET.\"}}",
+  "db": {}
+}

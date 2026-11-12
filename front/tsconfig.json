@@ -1,0 +1,23 @@
+{
+  "extends": "./tsconfig.base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "jsx": "react-jsx"
+  },
+  // Solution-wide typecheck: every package source + tests + repo scripts.
+  // Step 6: the Capacitor config sits at apps/mobile root (SDK convention) —
+  // included explicitly so it is typechecked like every other source.
+  "include": [
+    "env.d.ts",
+    "packages/*/src/**/*.ts",
+    "packages/*/tests/**/*.ts",
+    "packages/*/scripts/**/*.ts",
+    "apps/*/src/**/*.ts",
+    "apps/*/src/**/*.tsx",
+    "apps/*/tests/**/*.ts",
+    "apps/*/tests/**/*.tsx",
+    "apps/*/vite.config.ts",
+    "apps/*/capacitor.config.ts",
+    "scripts/**/*.mjs"
+  ]
+}

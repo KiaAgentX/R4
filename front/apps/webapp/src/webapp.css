@@ -1,0 +1,290 @@
+/* Webapp stylesheet — Aurora via the workspace packages (one source of
+   truth). Tailwind 4: class scanning pinned to THIS app's sources
+   (source(none) on the bridge import + explicit @source) so utility
+   generation is deterministic — same pattern as apps/shell + dashboard. */
+@import '@agent-one/ui/tailwind.css' source(none);
+@import '@agent-one/ui/fonts.css';
+@import '@agent-one/ui/tokens.css';
+@import '@agent-one/ui/base.css';
+@import '@agent-one/ui/components.css';
+
+@source '../src/**/*.{ts,tsx}';
+@source '../index.html';
+
+/* ── Webapp-specific Aurora primitives (aur-* prefix, logical props only) ── */
+
+/* Bottom navigation — mobile-first (§6: bottom nav on mobile, ≥ 44px) */
+.aur-bottomnav {
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: 0;
+  display: flex;
+  justify-content: space-around;
+  padding-block: var(--aur-space-2) calc(var(--aur-space-2) + env(safe-area-inset-bottom, 0px));
+  background: var(--aur-surface);
+  border-block-start: 1px solid var(--aur-border);
+  box-shadow: var(--aur-shadow-sm);
+}
+
+.aur-bottomnav a {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-block-size: var(--aur-touch);
+  min-inline-size: 64px;
+  padding-inline: var(--aur-space-2);
+  border-radius: var(--aur-radius-md);
+  color: var(--aur-text-muted);
+  font-size: var(--aur-text-xs);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.aur-bottomnav a[aria-current='page'] {
+  color: var(--aur-brand-600);
+  background: var(--aur-surface-2);
+}
+
+/* Drawer ("all pages" index) */
+.aur-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  justify-content: flex-start;
+}
+
+.aur-drawer__scrim {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in oklab, var(--aur-text) 40%, transparent);
+}
+
+.aur-drawer__panel {
+  position: relative;
+  block-size: 100dvh;
+  max-inline-size: 22rem;
+  inline-size: 85vw;
+  overflow-block: auto;
+  padding: var(--aur-space-4);
+  background: var(--aur-surface);
+  border-inline-end: 1px solid var(--aur-border);
+}
+
+/* 8-state timeline */
+.aur-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aur-space-2);
+  padding-inline-start: var(--aur-space-2);
+}
+
+.aur-timeline__row {
+  display: flex;
+  align-items: baseline;
+  gap: var(--aur-space-2);
+  position: relative;
+  padding-inline-start: var(--aur-space-5);
+  color: var(--aur-text-faint);
+}
+
+.aur-timeline__row::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 7px;
+  inset-block: 0;
+  inline-size: 2px;
+  background: var(--aur-border);
+}
+
+.aur-timeline__row:first-child::before {
+  inset-block-start: 50%;
+}
+
+.aur-timeline__row:last-child::before {
+  inset-block-end: 50%;
+}
+
+.aur-timeline__dot {
+  position: absolute;
+  inset-inline-start: 0;
+  block-size: 12px;
+  inline-size: 12px;
+  border-radius: 999px;
+  border: 2px solid var(--aur-border);
+  background: var(--aur-surface);
+}
+
+.aur-timeline__row[data-state='done'] {
+  color: var(--aur-text-muted);
+}
+
+.aur-timeline__row[data-state='done'] .aur-timeline__dot {
+  background: var(--aur-brand-500);
+  border-color: var(--aur-brand-500);
+}
+
+.aur-timeline__row[data-state='current'] {
+  color: var(--aur-text);
+  font-weight: 700;
+}
+
+.aur-timeline__row[data-state='current'] .aur-timeline__dot {
+  background: var(--aur-brand-600);
+  border-color: var(--aur-brand-600);
+  box-shadow: 0 0 0 4px color-mix(in oklab, var(--aur-brand-600) 20%, transparent);
+}
+
+.aur-timeline__row[data-terminal='true'] .aur-timeline__dot {
+  border-radius: 3px;
+}
+
+.aur-timeline__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--aur-space-2);
+}
+
+.aur-timeline__now {
+  font-size: var(--aur-text-xs);
+}
+
+.aur-timeline__next {
+  font-size: var(--aur-text-xs);
+  color: var(--aur-text-faint);
+}
+
+/* The D14 action ladder card */
+.aur-ladder {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aur-space-2);
+  padding: var(--aur-space-3);
+  border: 1px dashed var(--aur-border);
+  border-radius: var(--aur-radius-lg);
+  background: var(--aur-surface-2);
+}
+
+.aur-ladder__prefill {
+  font-size: var(--aur-text-sm);
+  color: var(--aur-text-muted);
+}
+
+.aur-ladder__command {
+  display: flex;
+  align-items: center;
+  gap: var(--aur-space-2);
+  justify-content: space-between;
+}
+
+.aur-ladder__command code {
+  font-size: var(--aur-text-sm);
+  padding: 2px 6px;
+  border-radius: var(--aur-radius-sm);
+  background: var(--aur-surface);
+  border: 1px solid var(--aur-border);
+}
+
+/* Key/value rows */
+.aur-kv {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--aur-space-3);
+  border-block-end: 1px dashed var(--aur-border);
+  padding-block: var(--aur-space-2);
+}
+
+.aur-kv__label {
+  color: var(--aur-text-muted);
+  font-size: var(--aur-text-sm);
+}
+
+.aur-kv__value {
+  font-weight: 600;
+  text-align: end;
+  overflow-wrap: anywhere;
+}
+
+/* AI chat bubbles */
+.aur-chat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aur-space-2);
+  min-block-size: 200px;
+}
+
+.aur-chat__msg {
+  max-inline-size: 85%;
+  padding: var(--aur-space-2) var(--aur-space-3);
+  border-radius: var(--aur-radius-lg);
+  font-size: var(--aur-text-sm);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.aur-chat__msg--user {
+  align-self: flex-end;
+  background: var(--aur-brand-500);
+  color: var(--aur-text-on-brand);
+}
+
+.aur-chat__msg--bot {
+  align-self: flex-start;
+  background: var(--aur-surface-2);
+  border: 1px solid var(--aur-border);
+}
+
+.aur-chat__meta {
+  font-size: var(--aur-text-xs);
+  color: var(--aur-text-faint);
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--aur-space-2);
+}
+
+/* Hero band (storefront home) */
+.aur-hero {
+  display: flex;
+  flex-direction: column;
+  gap: var(--aur-space-2);
+  padding: var(--aur-space-5);
+  border-radius: var(--aur-radius-lg);
+  background: linear-gradient(135deg, var(--aur-brand-600), var(--aur-brand-400));
+  color: var(--aur-text-on-brand);
+}
+
+.aur-hero__title {
+  font-size: var(--aur-text-xl);
+  font-weight: 800;
+}
+
+/* HITL badge emphasis inside money cells */
+.aur-badge--hitl {
+  margin-inline-start: var(--aur-space-2);
+}
+
+/* Notifications / receipt rows */
+.aur-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--aur-space-3);
+  border: 1px solid var(--aur-border);
+  border-radius: var(--aur-radius-lg);
+  background: var(--aur-surface);
+}
+
+.aur-receipt__head {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--aur-space-2);
+  font-size: var(--aur-text-xs);
+  color: var(--aur-text-faint);
+}
+
+/* Frame padding so fixed bottom nav never covers content */
+.aur-app-main {
+  padding-block-end: calc(72px + env(safe-area-inset-bottom, 0px));
+}

@@ -1,0 +1,7 @@
+{
+  "name": "ai_chat_disabled_503",
+  "status": 503,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"AI_DISABLED\",\"message\":\"The AI cycle is not configured — set OPENAI_BASE_URL / OPENAI_API_KEY / MODEL (ADR-006).\"}}",
+  "db": {}
+}

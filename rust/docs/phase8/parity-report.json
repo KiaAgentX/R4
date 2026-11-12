@@ -1,0 +1,223 @@
+{
+  "checks": [
+    {
+      "diffs": [],
+      "name": "health_ok",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "economy_summary",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "openapi_document",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "docs_page",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "unknown_route_envelope",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "account_created_201",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "account_duplicate_rejected",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "accounts_list",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "account_balance_missing_404",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "mint_ok",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "mint_negative_422",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "mint_replay_idempotent",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "burn_overdraft_422",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_created_201",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_unknown_seller_422",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_release_settles_90_10",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_release_replay_no_double_pay",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_dispute_then_refund",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_cancel_funded",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_expire_refunds",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "escrow_release_needs_hitl_over_threshold",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "hitl_created_201",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "hitl_approve_settles_90_10",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "hitl_second_decision_typed_error",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "hitl_reject_moves_no_money",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "hitl_sweep_empty_is_zero",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "bot_disabled_503",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "bot_bad_secret_401",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "bot_balance_command",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "ai_chat_disabled_503",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "ai_agents_list",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "ai_skills_list",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "ai_usage_empty",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "dashboard_overview",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "dashboard_product_created_listed",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "dashboard_orders_empty",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "dashboard_wallets_listed",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "dashboard_approval_decide_settles",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "settings_put_is_not_implemented",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "settings_list_empty",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "security_layers",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "admin_guard_401",
+      "ok": true
+    },
+    {
+      "diffs": [],
+      "name": "rate_limit_429_meta_limit",
+      "ok": true
+    }
+  ],
+  "green": 43,
+  "mode": "verify",
+  "ok": true,
+  "total": 43
+}

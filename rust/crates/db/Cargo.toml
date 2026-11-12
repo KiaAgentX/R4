@@ -1,0 +1,28 @@
+[package]
+name = "dropagentx-db"
+description = "لایه ماندگاری — sqlx، مهاجرت‌های نسخه‌دار، ریپازیتوری‌ها (فاز ۲)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+dropagentx-domain = { workspace = true }
+# sqlx/sqlite — همان بستر v3 (schema.prisma → provider "sqlite") تا dual-run
+# فاز ۸ روی یک فایل کار کند؛ تصمیم ثبت‌شده در Cargo.toml ورک‌اسپیس.
+sqlx = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+uuid = { workspace = true }
+chrono = { workspace = true }
+# فاز ۴ — کوئری‌های async بکاپ (tokio::fs برای VACUUM INTO + هرس)
+tokio = { workspace = true }
+
+[dev-dependencies]
+# #[tokio::test] برای تست‌های یکپارچگی
+tokio = { workspace = true }

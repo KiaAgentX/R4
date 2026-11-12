@@ -1,0 +1,39 @@
+[package]
+name = "dropagentx-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+# اسکلت cargo-fuzz فاز ۸ (ADR-009 §۷ فاز ۸ / §۱۴.۳):
+#   cargo +nightly fuzz build
+#   cargo +nightly fuzz run fuzz_ai_chat -- -max_total_time=300
+# هدف‌ها همان پارسرهای مرزی‌اند که در tests/fuzz_lite.rs به‌صورت قطعی هم
+# پوشش داده می‌شوند؛ این نسخه libfuzzer روی nightly است (فقط CI).
+
+[dependencies]
+libfuzzer-sys = "0.4"
+dropagentx-contracts = { path = "../crates/contracts" }
+
+[[bin]]
+name = "fuzz_mint_request"
+path = "fuzz_targets/fuzz_mint_request.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_create_escrow"
+path = "fuzz_targets/fuzz_create_escrow.rs"
+test = false
+doc = false
+bench = false
+
+[[bin]]
+name = "fuzz_ai_chat"
+path = "fuzz_targets/fuzz_ai_chat.rs"
+test = false
+doc = false
+bench = false

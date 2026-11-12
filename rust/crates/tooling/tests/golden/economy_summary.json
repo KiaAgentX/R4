@@ -1,0 +1,7 @@
+{
+  "name": "economy_summary",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"accountCount\":3,\"balanced\":true,\"burnedAllTime\":0,\"circulatingSupply\":0,\"currency\":\"DNX\",\"escrowLocked\":0,\"genesisSupply\":187672,\"mintedAllTime\":0,\"mintedThisYear\":0,\"openEscrows\":0,\"symbol\":\"Đ\",\"treasuryBalance\":0,\"trialBalanceSum\":0,\"yearlyMintCap\":1000000}",
+  "db": {}
+}

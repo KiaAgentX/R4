@@ -1,0 +1,16 @@
+{
+  "concurrency": 8,
+  "durationSecs": 10.001036625,
+  "errors": 0,
+  "label": "economy",
+  "ok": 565541,
+  "p50ms": 0.087,
+  "p95ms": 0.207,
+  "p99ms": 0.345,
+  "rps": 56548.238068271254,
+  "statuses": {
+    "429": 565541
+  },
+  "totalSamples": 565541,
+  "url": "http://127.0.0.1:3903/api/v1/economy"
+}

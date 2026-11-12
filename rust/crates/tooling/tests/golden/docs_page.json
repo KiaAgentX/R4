@@ -1,0 +1,7 @@
+{
+  "name": "docs_page",
+  "status": 200,
+  "content_type": "text/html; charset=utf-8",
+  "body": "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\"><title>DropAgentX v3 API — OpenAPI</title><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\"><style>body{margin:0;background:#0a0f14;color:#dbe4ee;font-family:system-ui,sans-serif}</style></head><body><redoc spec-url=\"/api/v1/openapi.json\"></redoc><script src=\"https://cdn.redoc.ly/redoc/latest/bundles/redoc.standalone.js\"></script><noscript>This page needs JavaScript. The raw spec lives at /api/v1/openapi.json</noscript></body></html>",
+  "db": {}
+}

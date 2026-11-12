@@ -1,0 +1,218 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Aurora design tokens — Agent-One Phase 7 Step 2 (STEP1-AUDIT §7, D9, D12)
+   ─────────────────────────────────────────────────────────────────────────
+   Single source of truth for the whole frontend. Consumed by:
+   • plain CSS  → components.css uses var(--aur-*)
+   • Tailwind 4 → tailwind.css maps them into @theme
+   • TS         → theme.ts only toggles data-theme; values live HERE only
+
+   Themes:  :root = light   |   [data-theme="dark"] = dark
+            prefers-color-scheme drives the default via the media block at the
+            bottom; an explicit data-theme always wins (CSS cascade order).
+   RTL:     tokens are physical-neutral; all layout uses logical properties.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  /* ── Aurora brand — northern-lights spectrum ─────────────────────────── */
+  --aur-brand-300: #7ef2cf;
+  --aur-brand-400: #35e0b0;
+  --aur-brand-500: #0fbf92;   /* primary action */
+  --aur-brand-600: #0a9c77;
+  --aur-brand-700: #0a7d61;
+  --aur-violet-400: #9d8cff;
+  --aur-violet-500: #7c6fff;  /* accent / AI surfaces */
+  --aur-violet-600: #6455e6;
+
+  /* ── Semantic surfaces (light) ───────────────────────────────────────── */
+  --aur-bg: #f6f8f9;
+  --aur-surface: #ffffff;
+  --aur-surface-2: #eef2f4;
+  --aur-overlay: rgba(12, 20, 24, 0.55);
+  --aur-border: #dbe3e7;
+  --aur-border-strong: #b9c6cd;
+
+  /* ── Text ────────────────────────────────────────────────────────────── */
+  --aur-text: #10201d;
+  --aur-text-muted: #51665f;
+  --aur-text-faint: #7d928b;
+  --aur-text-on-brand: #ffffff;
+
+  /* ── Status ──────────────────────────────────────────────────────────── */
+  --aur-success: #0a9c77;
+  --aur-success-bg: #e2f7ef;
+  --aur-warning: #b97d0a;
+  --aur-warning-bg: #fdf3df;
+  --aur-danger: #c93d3d;
+  --aur-danger-bg: #fceaea;
+  --aur-info: #0a7ea4;
+  --aur-info-bg: #e3f3fa;
+
+  /* ── Escrow 8-state machine palette (domain/src/escrow.rs) ───────────── */
+  --aur-state-created: var(--aur-info);
+  --aur-state-created-bg: var(--aur-info-bg);
+  --aur-state-funded: var(--aur-brand-600);
+  --aur-state-funded-bg: #dcf5ea;
+  --aur-state-delivered: #6455e6;
+  --aur-state-delivered-bg: #eae7fd;
+  --aur-state-released: #0a7d3e;
+  --aur-state-released-bg: #e0f5e7;
+  --aur-state-disputed: #b97d0a;
+  --aur-state-disputed-bg: var(--aur-warning-bg);
+  --aur-state-cancelled: #6b7c86;
+  --aur-state-cancelled-bg: #eceff1;
+  --aur-state-expired: #8a6b52;
+  --aur-state-expired-bg: #f4ece5;
+  --aur-state-refunded: #51665f;
+  --aur-state-refunded-bg: #e9eff0;
+
+  /* ── Money (Din / Đ) — integer-first, tabular ────────────────────────── */
+  --aur-money: var(--aur-brand-700);
+  --aur-money-negative: var(--aur-danger);
+  --aur-money-hitl: var(--aur-warning); /* ≥ 50,000 Đ needs human approval */
+
+  /* ── Typography ──────────────────────────────────────────────────────── */
+  --aur-font-fa: 'Vazirmatn Variable', 'Inter Variable', system-ui, sans-serif;
+  --aur-font-en: 'Inter Variable', 'Vazirmatn Variable', system-ui, sans-serif;
+  --aur-font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  --aur-text-xs: 0.75rem;
+  --aur-text-sm: 0.875rem;
+  --aur-text-md: 1rem;
+  --aur-text-lg: 1.125rem;
+  --aur-text-xl: 1.375rem;
+  --aur-text-2xl: 1.75rem;
+  --aur-leading: 1.7;          /* Persian needs generous leading */
+  --aur-leading-tight: 1.35;
+
+  /* ── Spacing (4px base) ──────────────────────────────────────────────── */
+  --aur-space-1: 0.25rem;
+  --aur-space-2: 0.5rem;
+  --aur-space-3: 0.75rem;
+  --aur-space-4: 1rem;
+  --aur-space-5: 1.5rem;
+  --aur-space-6: 2rem;
+  --aur-space-7: 3rem;
+
+  /* ── Shape & elevation ───────────────────────────────────────────────── */
+  --aur-radius-sm: 8px;
+  --aur-radius-md: 12px;
+  --aur-radius-lg: 16px;
+  --aur-radius-pill: 999px;
+  --aur-shadow-sm: 0 1px 2px rgba(16, 32, 29, 0.08);
+  --aur-shadow-md: 0 4px 14px rgba(16, 32, 29, 0.10);
+  --aur-shadow-lg: 0 10px 30px rgba(16, 32, 29, 0.14);
+
+  /* ── Motion ──────────────────────────────────────────────────────────── */
+  --aur-dur-fast: 120ms;
+  --aur-dur: 200ms;
+  --aur-dur-slow: 350ms;
+  --aur-ease: cubic-bezier(0.2, 0.7, 0.3, 1);
+
+  /* ── A11y & layers ───────────────────────────────────────────────────── */
+  --aur-focus: 0 0 0 3px rgba(15, 191, 146, 0.35);
+  --aur-touch: 44px;           /* minimum touch target (UX rule §6) */
+  --aur-z-dropdown: 100;
+  --aur-z-modal: 200;
+  --aur-z-toast: 300;
+}
+
+/* ── Dark theme — explicit opt-in/out always wins over system ───────────── */
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --aur-brand-300: #4fd8ab;
+  --aur-brand-400: #23c797;
+  --aur-brand-500: #14b183;
+  --aur-brand-600: #0f9c72;
+  --aur-brand-700: #35e0b0;
+  --aur-violet-400: #8f7dff;
+  --aur-violet-500: #7c6fff;
+  --aur-violet-600: #9d8cff;
+
+  --aur-bg: #0c1614;
+  --aur-surface: #12211e;
+  --aur-surface-2: #1a2f2b;
+  --aur-overlay: rgba(2, 8, 7, 0.7);
+  --aur-border: #24403a;
+  --aur-border-strong: #35564e;
+
+  --aur-text: #e6f2ee;
+  --aur-text-muted: #9db8b0;
+  --aur-text-faint: #6e8a82;
+  --aur-text-on-brand: #04201a;
+
+  --aur-success: #35e0b0;
+  --aur-success-bg: #0f2f26;
+  --aur-warning: #f0b74a;
+  --aur-warning-bg: #332711;
+  --aur-danger: #ff7a7a;
+  --aur-danger-bg: #3a1616;
+  --aur-info: #56b8dd;
+  --aur-info-bg: #0e2a35;
+
+  --aur-state-created: var(--aur-info);
+  --aur-state-created-bg: var(--aur-info-bg);
+  --aur-state-funded: var(--aur-brand-700);
+  --aur-state-funded-bg: #10352b;
+  --aur-state-delivered: var(--aur-violet-600);
+  --aur-state-delivered-bg: #1c1838;
+  --aur-state-released: #58d68d;
+  --aur-state-released-bg: #12301f;
+  --aur-state-disputed: var(--aur-warning);
+  --aur-state-disputed-bg: var(--aur-warning-bg);
+  --aur-state-cancelled: #9db8b0;
+  --aur-state-cancelled-bg: #22302d;
+  --aur-state-expired: #d3a27b;
+  --aur-state-expired-bg: #30241a;
+  --aur-state-refunded: #b8ccc5;
+  --aur-state-refunded-bg: #1e2b28;
+
+  --aur-money: var(--aur-brand-700);
+  --aur-money-negative: var(--aur-danger);
+  --aur-money-hitl: var(--aur-warning);
+
+  --aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+  --aur-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+  --aur-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+  --aur-focus: 0 0 0 3px rgba(35, 199, 151, 0.45);
+}
+
+/* ── System default: no explicit data-theme → follow the OS ─────────────── */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    color-scheme: dark;
+
+    --aur-bg: #0c1614;
+    --aur-surface: #12211e;
+    --aur-surface-2: #1a2f2b;
+    --aur-overlay: rgba(2, 8, 7, 0.7);
+    --aur-border: #24403a;
+    --aur-border-strong: #35564e;
+    --aur-text: #e6f2ee;
+    --aur-text-muted: #9db8b0;
+    --aur-text-faint: #6e8a82;
+    --aur-text-on-brand: #04201a;
+    --aur-success: #35e0b0;
+    --aur-success-bg: #0f2f26;
+    --aur-warning: #f0b74a;
+    --aur-warning-bg: #332711;
+    --aur-danger: #ff7a7a;
+    --aur-danger-bg: #3a1616;
+    --aur-info: #56b8dd;
+    --aur-info-bg: #0e2a35;
+    --aur-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.45);
+    --aur-shadow-md: 0 4px 14px rgba(0, 0, 0, 0.5);
+    --aur-shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.55);
+    --aur-focus: 0 0 0 3px rgba(35, 199, 151, 0.45);
+  }
+}
+
+/* ── Reduced motion — honest stillness (a11y) ───────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --aur-dur-fast: 0ms;
+    --aur-dur: 0ms;
+    --aur-dur-slow: 0ms;
+  }
+}

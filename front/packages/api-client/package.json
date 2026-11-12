@@ -1,0 +1,22 @@
+{
+  "name": "@agent-one/api-client",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Typed API client GENERATED from the pinned golden OpenAPI 3.1 document (rust/crates/contracts/tests/fixtures/golden-openapi.json) + auth layers + client-side idempotency keys (D5/D7). No hand-written URLs.",
+  "type": "module",
+  "exports": {
+    ".": "./src/client.ts",
+    "./errors": "./src/errors.ts",
+    "./idempotency": "./src/idempotency.ts"
+  },
+  "scripts": {
+    "generate": "node scripts/generate.mjs"
+  },
+  "dependencies": {
+    "openapi-fetch": "^0.14.0"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.9.0",
+    "typescript": "^5.9.3"
+  }
+}

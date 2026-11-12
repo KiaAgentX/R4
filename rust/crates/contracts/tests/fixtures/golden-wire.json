@@ -1,0 +1,528 @@
+{
+ "health": {
+  "status": "ok",
+  "service": "dropagentx-v3-server",
+  "version": "4.4.3",
+  "llmConfigured": true,
+  "llmModel": "gpt-4o-mini",
+  "db": "ok",
+  "bot": "ok",
+  "ai": "ok",
+  "uptime": 1234.5
+ },
+ "economy": {
+  "currency": "DNX",
+  "symbol": "Đ",
+  "circulatingSupply": 187672,
+  "treasuryBalance": 127672,
+  "escrowLocked": 60000,
+  "mintedAllTime": 247672,
+  "burnedAllTime": 60000,
+  "mintedThisYear": 247672,
+  "yearlyMintCap": 10000000,
+  "genesisSupply": 187672,
+  "trialBalanceSum": 0,
+  "balanced": true,
+  "accountCount": 468,
+  "openEscrows": 2
+ },
+ "accountView": {
+  "id": "user:tg:123",
+  "kind": "user",
+  "label": "Ali",
+  "balance": 500,
+  "createdAt": "2026-01-15T10:30:00.000Z"
+ },
+ "accountList": {
+  "items": [
+   {
+    "id": "user:tg:123",
+    "kind": "user",
+    "label": null,
+    "balance": 0,
+    "createdAt": "2026-01-15T10:30:00.000Z"
+   }
+  ]
+ },
+ "balance": {
+  "accountId": "user:tg:123",
+  "balance": 7
+ },
+ "walletMove": {
+  "txId": "tx:01",
+  "accountId": "user:tg:123",
+  "balance": 500,
+  "replayed": false
+ },
+ "escrowView": {
+  "id": "escrow:01",
+  "buyerId": "user:tg:1",
+  "sellerId": "user:tg:2",
+  "amount": 60000,
+  "productRef": "prod:1",
+  "status": "FUNDED",
+  "createdAt": "2026-02-01T00:00:00.000Z",
+  "fundedTxId": "tx:02",
+  "settleTxId": null,
+  "disputeReason": null,
+  "deliveryRef": null,
+  "expiresAt": "2026-03-01T00:00:00.000Z"
+ },
+ "escrowList": {
+  "items": []
+ },
+ "escrowAction": {
+  "escrow": {
+   "id": "escrow:01",
+   "buyerId": "user:tg:1",
+   "sellerId": "user:tg:2",
+   "amount": 60000,
+   "productRef": null,
+   "status": "RELEASED",
+   "createdAt": "2026-02-01T00:00:00.000Z",
+   "fundedTxId": "tx:02",
+   "settleTxId": "tx:03",
+   "disputeReason": null,
+   "deliveryRef": "ref-9",
+   "expiresAt": null
+  },
+  "txId": "tx:03",
+  "replayed": false
+ },
+ "hitlView": {
+  "id": "hitl:01",
+  "kind": "ESCROW_RELEASE",
+  "escrowId": "escrow:01",
+  "amount": 60000,
+  "requesterId": "user:tg:1",
+  "note": "big order",
+  "status": "PENDING",
+  "createdAt": "2026-02-01T00:00:00.000Z",
+  "expiresAt": "2026-02-02T00:00:00.000Z",
+  "decidedBy": null,
+  "decidedAt": null,
+  "decisionNote": null
+ },
+ "hitlList": {
+  "items": []
+ },
+ "hitlSweep": {
+  "expired": 3
+ },
+ "hitlAction": {
+  "request": {
+   "id": "hitl:01",
+   "kind": "ESCROW_RELEASE",
+   "escrowId": "escrow:01",
+   "amount": 60000,
+   "requesterId": "user:tg:1",
+   "note": null,
+   "status": "APPROVED",
+   "createdAt": "2026-02-01T00:00:00.000Z",
+   "expiresAt": "2026-02-02T00:00:00.000Z",
+   "decidedBy": "admin",
+   "decidedAt": "2026-02-01T05:00:00.000Z",
+   "decisionNote": "ok"
+  },
+  "escrow": null,
+  "txId": null,
+  "replayed": true
+ },
+ "backupCreated": {
+  "file": "/vol/db/backups/db-2026.sqlite",
+  "sizeBytes": 1048576,
+  "kept": 7,
+  "createdAt": "2026-02-01T00:00:00.000Z"
+ },
+ "aiChat": {
+  "reply": "سلام!",
+  "agent": "receptionist",
+  "via": "llm",
+  "provider": "openai",
+  "toolTraces": [
+   {
+    "skill": "wallet.balance",
+    "ok": true,
+    "summary": "read balance",
+    "pendingApproval": false,
+    "code": null
+   }
+  ],
+  "usage": {
+   "provider": "openai",
+   "model": "gpt-4o-mini",
+   "promptTokens": 120,
+   "completionTokens": 45,
+   "totalTokens": 165
+  },
+  "pendingApproval": false,
+  "redactions": 0
+ },
+ "aiAgents": {
+  "items": [
+   {
+    "name": "orchestrator",
+    "emoji": "🎯",
+    "titleFa": "هماهنگ‌کننده",
+    "titleEn": "Orchestrator",
+    "description": "routes",
+    "skills": [
+     "wallet.balance"
+    ]
+   }
+  ]
+ },
+ "aiSkills": {
+  "items": [
+   {
+    "id": "wallet.balance",
+    "kind": "read",
+    "titleFa": "موجودی",
+    "titleEn": "Balance",
+    "description": "read balance",
+    "allowedAgents": [
+     "orchestrator"
+    ],
+    "staffOnly": false
+   }
+  ]
+ },
+ "aiUsage": {
+  "userId": "user:tg:123",
+  "usedToday": 500,
+  "cap": 50000,
+  "remainingToday": 49500
+ },
+ "brand": {
+  "ok": true,
+  "data": {
+   "name": "DropAgentX",
+   "tagline": "Empire"
+  }
+ },
+ "overview": {
+  "ok": true,
+  "data": {
+   "users": 466,
+   "products": 30,
+   "orders": 12,
+   "revenueStars": 0,
+   "revenueCredits": 4500,
+   "pendingApprovals": 1,
+   "aiCalls": 99,
+   "series": [
+    {
+     "date": "2026-02-01",
+     "revenue": 100,
+     "orders": 2
+    }
+   ],
+   "topProducts": [
+    {
+     "title": "VIP",
+     "salesCount": 7
+    }
+   ],
+   "recentOrders": [
+    {
+     "id": "escrow:9",
+     "title": "VIP",
+     "buyer": {
+      "name": "Ali",
+      "username": "ali"
+     },
+     "totalStars": 0,
+     "totalCredits": 1500,
+     "status": "delivered",
+     "createdAt": "2026-02-01T00:00:00.000Z"
+    }
+   ]
+  }
+ },
+ "productView": {
+  "id": "prod:1",
+  "sellerId": "treasury",
+  "title": "VIP",
+  "description": "desc",
+  "category": "digital",
+  "priceStars": 0,
+  "priceCredits": 1500,
+  "stock": -1,
+  "salesCount": 7,
+  "featured": true,
+  "status": "active",
+  "createdAt": "2026-02-01T00:00:00.000Z"
+ },
+ "productList": {
+  "ok": true,
+  "data": {
+   "items": [],
+   "total": 0,
+   "limit": 12,
+   "offset": 0
+  }
+ },
+ "productMutation": {
+  "ok": true,
+  "data": {
+   "id": "prod:1",
+   "sellerId": "treasury",
+   "title": "VIP",
+   "description": "d",
+   "category": "c",
+   "priceStars": 0,
+   "priceCredits": 1500,
+   "stock": 5,
+   "salesCount": 0,
+   "featured": false,
+   "status": "active",
+   "createdAt": "2026-02-01T00:00:00.000Z"
+  }
+ },
+ "orderView": {
+  "id": "escrow:9",
+  "product": "VIP",
+  "buyer": {
+   "name": null,
+   "username": null
+  },
+  "totalStars": 0,
+  "totalCredits": 1500,
+  "status": "paid",
+  "createdAt": "2026-02-01T00:00:00.000Z"
+ },
+ "orderList": {
+  "ok": true,
+  "data": {
+   "items": [],
+   "total": 0
+  }
+ },
+ "orderAction": {
+  "ok": true,
+  "data": {
+   "id": "escrow:9",
+   "status": "delivered"
+  }
+ },
+ "dashUserList": {
+  "ok": true,
+  "data": {
+   "items": [
+    {
+     "id": "user:tg:1",
+     "name": "Ali",
+     "username": "ali",
+     "role": "user",
+     "language": "fa",
+     "createdAt": "2026-01-01T00:00:00.000Z"
+    }
+   ]
+  }
+ },
+ "dashWalletList": {
+  "ok": true,
+  "data": {
+   "items": [
+    {
+     "name": "Ali",
+     "username": null,
+     "role": "user",
+     "balance": 500,
+     "locked": 0,
+     "credits": 1500
+    }
+   ]
+  }
+ },
+ "dashList": {
+  "ok": true,
+  "data": {
+   "items": [
+    {
+     "anything": 1,
+     "nested": {
+      "x": "y"
+     }
+    }
+   ]
+  }
+ },
+ "leaderboard": {
+  "ok": true,
+  "data": {
+   "items": [
+    {
+     "rank": 1,
+     "name": "Ali",
+     "username": null,
+     "xp": 0,
+     "sales": 12,
+     "refs": 0
+    }
+   ]
+  }
+ },
+ "approvalList": {
+  "ok": true,
+  "data": {
+   "items": [
+    {
+     "id": "hitl:01",
+     "type": "ESCROW_RELEASE",
+     "riskLevel": "high",
+     "summary": "Release 60000 Đ — escrow escrow:01",
+     "note": null,
+     "amount": 60000,
+     "status": "pending",
+     "createdAt": "2026-02-01T00:00:00.000Z",
+     "expiresAt": "2026-02-02T00:00:00.000Z"
+    }
+   ]
+  }
+ },
+ "approvalDecision": {
+  "ok": true,
+  "data": {
+   "id": "hitl:01",
+   "status": "approved",
+   "escrowId": "escrow:01",
+   "txId": "tx:03"
+  }
+ },
+ "settingsList": {
+  "ok": true,
+  "data": {
+   "items": [
+    {
+     "key": "k",
+     "value": "v"
+    }
+   ]
+  }
+ },
+ "security": {
+  "ok": true,
+  "data": {
+   "layers": [
+    {
+     "id": "admin-key",
+     "name": "Admin key",
+     "description": "X-KIA-Key",
+     "active": true
+    }
+   ],
+   "audit": [
+    {
+     "id": "a:1",
+     "actor": "admin",
+     "action": "account.create",
+     "target": "user:tg:1",
+     "status": "ok",
+     "createdAt": "2026-02-01T00:00:00.000Z"
+    }
+   ]
+  }
+ },
+ "req:createAccount": {
+  "id": "user:tg:123",
+  "label": "Ali"
+ },
+ "req:mint": {
+  "accountId": "user:tg:123",
+  "amount": 500,
+  "memo": "welcome",
+  "idempotencyKey": "mint-ali-1"
+ },
+ "req:burn": {
+  "accountId": "user:tg:123",
+  "amount": 250
+ },
+ "req:createEscrow": {
+  "id": "escrow:01",
+  "buyerId": "user:tg:1",
+  "sellerId": "user:tg:2",
+  "amount": 60000,
+  "productRef": "prod:1",
+  "ttlHours": 48,
+  "idempotencyKey": "escrow-01"
+ },
+ "req:fund": {},
+ "req:deliver": {
+  "deliveryRef": "ref-9"
+ },
+ "req:release": {
+  "approvedByAdmin": true
+ },
+ "req:dispute": {
+  "reason": "never arrived"
+ },
+ "req:refund": {},
+ "req:cancel": {},
+ "req:expire": {},
+ "req:createHitl": {
+  "id": "hitl:01",
+  "kind": "ESCROW_RELEASE",
+  "escrowId": "escrow:01",
+  "requesterId": "user:tg:1",
+  "note": "big",
+  "ttlHours": 24
+ },
+ "req:hitlDecision": {
+  "decidedBy": "user:admin:1",
+  "note": "approved by council"
+ },
+ "req:aiChat": {
+  "userId": "user:tg:123",
+  "initData": "user=%7B%22id%22%3A123%7D&auth_date=1700000000&hash=ab",
+  "role": "user",
+  "text": "سلام",
+  "language": "fa",
+  "history": [
+   {
+    "role": "user",
+    "content": "hi"
+   }
+  ],
+  "knowledge": "kb"
+ },
+ "req:createProduct": {
+  "title": "VIP",
+  "category": "digital",
+  "priceStars": 0,
+  "priceCredits": 1500,
+  "stock": 5,
+  "featured": true,
+  "description": "d"
+ },
+ "req:updateProduct": {
+  "title": "VIP2",
+  "active": false
+ },
+ "req:orderAction": {
+  "action": "deliver"
+ },
+ "req:approvalDecision": {
+  "approve": true,
+  "note": "go"
+ },
+ "req:settingsPut": {
+  "key": "theme",
+  "value": "dark"
+ },
+ "wireError": {
+  "error": {
+   "code": "ACCOUNT_OVERDRAFT",
+   "message": "no funds",
+   "meta": {
+    "needed": 90
+   }
+  }
+ },
+ "wireErrorNoMeta": {
+  "error": {
+   "code": "ESCROW_NOT_FOUND",
+   "message": "missing"
+  }
+ }
+}

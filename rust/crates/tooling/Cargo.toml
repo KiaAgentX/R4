@@ -1,0 +1,49 @@
+[package]
+name = "dropagentx-tooling"
+description = "ابزار — مهاجرت لگاسی، genesis_proof، dual_run، audit_ledger، parity، loadtest (فاز ۲/۸)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# مدل خطا: anyhow فقط در باینری‌ها (قاعدهٔ workspace)
+dropagentx-db = { workspace = true }
+dropagentx-server = { workspace = true }
+anyhow = { workspace = true }
+tokio = { workspace = true }
+sqlx = { workspace = true }
+# فاز ۸ — dual-run پراکسی + parity harness + loadtest
+axum = { workspace = true }
+tower = { workspace = true }
+http-body-util = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+reqwest = { workspace = true }
+sha2 = { workspace = true }
+regex = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+proptest = { workspace = true }
+dropagentx-contracts = { workspace = true }
+
+[[bin]]
+name = "dual-run"
+path = "src/bin/dual-run.rs"
+
+[[bin]]
+name = "parity"
+path = "src/bin/parity.rs"
+
+[[bin]]
+name = "audit-ledger"
+path = "src/bin/audit-ledger.rs"
+
+[[bin]]
+name = "loadtest"
+path = "src/bin/loadtest.rs"

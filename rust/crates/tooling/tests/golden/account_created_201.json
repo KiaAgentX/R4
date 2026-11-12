@@ -1,0 +1,9 @@
+{
+  "name": "account_created_201",
+  "status": 201,
+  "content_type": "application/json",
+  "body": "{\"balance\":0,\"createdAt\":\"<TS>\",\"id\":\"user:p1\",\"kind\":\"user\",\"label\":\"parity\"}",
+  "db": {
+    "user_wallet_sum": 0
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "name": "hitl_reject_moves_no_money",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"escrow\":null,\"replayed\":false,\"request\":{\"amount\":60000,\"createdAt\":\"<TS>\",\"decidedAt\":\"<TS>\",\"decidedBy\":\"admin:kia\",\"decisionNote\":\"refund\",\"escrowId\":\"escrow:h4\",\"expiresAt\":\"<TS>\",\"id\":\"hitl:pa4\",\"kind\":\"ESCROW_RELEASE\",\"note\":null,\"requesterId\":\"user:p1\",\"status\":\"REJECTED\"},\"txId\":null}",
+  "db": {
+    "user_wallet_sum": 140000,
+    "treasury": 0,
+    "escrow:escrow:h4": "DELIVERED"
+  }
+}

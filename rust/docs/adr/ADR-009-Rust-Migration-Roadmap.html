@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ADR-009 — نقشه راه کامل مهاجرت DropAgentX به Rust</title>
+<style>
+  :root{
+    --bg:#ffffff; --fg:#1f2328; --muted:#59636e; --border:#d1d9e0; --border-soft:#e7ebef;
+    --code-bg:#f6f8fa; --accent:#0969da; --green:#1a7f37; --red:#cf222e; --amber:#9a6700;
+    --purple:#8250df; --head-bg:#f6f8fa;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--bg); color:var(--fg);
+    font-family:Vazirmatn,-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Tahoma,Helvetica,Arial,sans-serif;
+    font-size:16px; line-height:1.85;
+  }
+  .wrap{max-width:1012px; margin:0 auto; padding:32px 24px 80px}
+  h1{font-size:2em; border-bottom:1px solid var(--border); padding-bottom:.4em; line-height:1.4}
+  h2{font-size:1.5em; border-bottom:1px solid var(--border); padding-bottom:.35em; margin-top:2.2em}
+  h3{font-size:1.2em; margin-top:1.6em}
+  a{color:var(--accent); text-decoration:none}
+  a:hover{text-decoration:underline}
+  p{margin:.8em 0}
+  ul,ol{padding-right:1.6em; padding-left:0}
+  li{margin:.3em 0}
+  strong{color:var(--fg)}
+  code{
+    font-family:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,"Liberation Mono",monospace;
+    background:var(--code-bg); border:1px solid var(--border-soft); border-radius:6px;
+    padding:.15em .4em; font-size:.88em; direction:ltr; unicode-bidi:embed;
+  }
+  pre{
+    background:var(--code-bg); border:1px solid var(--border); border-radius:6px;
+    padding:16px; overflow-x:auto; direction:ltr; text-align:left; line-height:1.6;
+  }
+  pre code{background:none; border:none; padding:0; font-size:.86em; white-space:pre}
+  /* syntax */
+  .k{color:var(--red); font-weight:600}      /* keyword */
+  .t{color:#0550ae; font-weight:600}         /* type */
+  .f{color:var(--purple)}                    /* function */
+  .s{color:#0a3069}                          /* string */
+  .c{color:var(--muted); font-style:italic}  /* comment */
+  .n{color:#0550ae}                          /* number */
+  .a{color:#953800}                          /* attribute/macro */
+  .m{color:var(--green); font-weight:600}    /* lifetime/const */
+  /* tables */
+  table{border-collapse:collapse; width:100%; margin:1em 0; font-size:.94em}
+  th,td{border:1px solid var(--border); padding:8px 12px; text-align:right; vertical-align:top}
+  th{background:var(--head-bg); font-weight:700}
+  tr:nth-child(even) td{background:#fbfcfd}
+  table.ltr td:first-child, table.ltr th:first-child{direction:ltr; text-align:left}
+  /* badges */
+  .badges{margin:14px 0 4px}
+  .badge{
+    display:inline-block; border-radius:999px; padding:3px 12px; font-size:.78em; font-weight:700;
+    border:1px solid var(--border); margin:0 0 6px 6px; background:var(--code-bg);
+  }
+  .badge.b-blue{background:#ddf4ff; border-color:#54aeff66; color:var(--accent)}
+  .badge.b-green{background:#dafbe1; border-color:#4ac26b66; color:var(--green)}
+  .badge.b-amber{background:#fff8c5; border-color:#d4a72c66; color:var(--amber)}
+  .badge.b-red{background:#ffebe9; border-color:#ff818266; color:var(--red)}
+  .badge.b-purple{background:#fbefff; border-color:#c297ff66; color:var(--purple)}
+  /* alerts */
+  .alert{border-right:4px solid; border-radius:6px; padding:10px 16px; margin:1.2em 0}
+  .alert p{margin:.3em 0}
+  .alert .ttl{font-weight:800; display:block; margin-bottom:.2em}
+  .a-note{background:#ddf4ff; border-color:var(--accent)}
+  .a-warn{background:#fff8c5; border-color:var(--amber)}
+  .a-danger{background:#ffebe9; border-color:var(--red)}
+  .a-tip{background:#dafbe1; border-color:var(--green)}
+  /* toc */
+  .toc{background:var(--code-bg); border:1px solid var(--border); border-radius:8px; padding:16px 22px; margin:1.4em 0}
+  .toc .t-ttl{font-weight:800; margin-bottom:6px}
+  .toc ol{columns:2; column-gap:40px; margin:0; font-size:.94em}
+  .toc li{break-inside:avoid}
+  /* meta grid */
+  .meta{display:grid; grid-template-columns:repeat(auto-fit,minmax(210px,1fr)); gap:12px; margin:1.2em 0}
+  .meta .card{border:1px solid var(--border); border-radius:8px; padding:12px 16px; background:#fff}
+  .meta .card .lbl{font-size:.78em; color:var(--muted); font-weight:700; margin-bottom:2px}
+  .meta .card .val{font-weight:800; font-size:1.05em}
+  .meta .card .sub{font-size:.8em; color:var(--muted)}
+  /* phase cards */
+  .phase{border:1px solid var(--border); border-radius:8px; margin:1.4em 0; overflow:hidden}
+  .phase > .ph-head{padding:10px 18px; background:var(--head-bg); border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+  .phase > .ph-head .pnum{font-weight:900; color:var(--accent); direction:ltr}
+  .phase > .ph-head .ptitle{font-weight:800; font-size:1.05em}
+  .phase > .ph-head .ptags{margin-inline-start:auto; display:flex; gap:6px; flex-wrap:wrap}
+  .tag{font-size:.72em; font-weight:700; border:1px solid var(--border); border-radius:999px; padding:1px 10px; background:#fff; color:var(--muted)}
+  .tag.t-green{color:var(--green); border-color:#4ac26b66; background:#dafbe1}
+  .tag.t-amber{color:var(--amber); border-color:#d4a72c66; background:#fff8c5}
+  .phase > .ph-body{padding:14px 20px}
+  .phase h4{margin:.4em 0 .3em; font-size:.98em}
+  .accept{background:#f0fff4; border:1px solid #4ac26b44; border-radius:6px; padding:10px 16px; margin-top:10px}
+  .accept .ttl{color:var(--green); font-weight:800; font-size:.9em}
+  .accept ul{margin:.4em 0 .2em; font-size:.92em}
+  /* checklist */
+  ul.check{list-style:none; padding-right:.2em}
+  ul.check li::before{content:"☐ "; color:var(--accent); font-weight:800}
+  /* gantt */
+  .gantt{direction:ltr; border:1px solid var(--border); border-radius:8px; overflow-x:auto; padding:14px; background:#fff}
+  .g-inner{min-width:900px}
+  .g-row{display:grid; grid-template-columns:200px repeat(20,minmax(28px,1fr)); align-items:center; min-height:30px}
+  .g-row.head{font-size:.72em; color:var(--muted); font-weight:700; border-bottom:1px solid var(--border)}
+  .g-row.head .wk{text-align:center; padding:4px 0}
+  .g-row .glabel{font-size:.82em; font-weight:700; padding-left:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis}
+  .g-row .gcell{border-inline-start:1px dashed var(--border-soft); height:100%}
+  .g-bar{height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:.68em; font-weight:800; white-space:nowrap; overflow:hidden; box-shadow:0 1px 2px #0002}
+  .g-month{grid-column:span 5; text-align:center; font-size:.72em; color:var(--muted); font-weight:800; border-inline:1px solid var(--border-soft); padding:2px 0}
+  .c1{background:#54aeff}.c2{background:#1a7f37}.c3{background:#8250df}.c4{background:#bf8700}
+  .c5{background:#0969da}.c6{background:#cf222e}.c7{background:#d4a72c}.c8{background:#57606a}.c9{background:#e16f24}
+  .g-legend{display:flex; gap:14px; flex-wrap:wrap; font-size:.78em; color:var(--muted); margin-top:8px}
+  .g-legend i{display:inline-block; width:12px; height:12px; border-radius:3px; margin-left:5px; vertical-align:-1px}
+  /* before/after diagram */
+  .diagram{border:1px solid var(--border); border-radius:8px; padding:10px; background:#fff; overflow-x:auto; margin:1.2em 0}
+  .diagram svg{display:block; margin:0 auto; min-width:860px}
+  .dg-cap{text-align:center; font-size:.82em; color:var(--muted); margin-top:6px}
+  /* rollback flow */
+  .flow{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:12px; margin:1em 0}
+  .flow .step{border:1px solid var(--border); border-radius:8px; padding:12px 14px; font-size:.92em}
+  .flow .step .st{font-weight:800; color:var(--accent); font-size:.8em; margin-bottom:4px}
+  hr{border:none; border-top:2px solid var(--border); margin:2.4em 0}
+  .foot{color:var(--muted); font-size:.85em; text-align:center; margin-top:48px}
+  .num{font-variant-numeric:tabular-nums}
+  @media print{
+    body{font-size:13px}
+    .wrap{padding:8px; max-width:none}
+    h2{page-break-after:avoid} .phase,pre,table,.diagram{page-break-inside:avoid}
+    pre{white-space:pre-wrap}
+  }
+  @media (max-width:720px){ .toc ol{columns:1} .g-row{grid-template-columns:140px repeat(20,26px)} }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<!-- ═══════════════ HEADER ═══════════════ -->
+<h1>ADR-009 — نقشه راه کامل مهاجرت DropAgentX به Rust</h1>
+
+<div class="badges">
+  <span class="badge b-amber">وضعیت: Proposed — در انتظار تأیید مالک</span>
+  <span class="badge b-blue">دامنه: بک‌اند نسل ۳ (Agent-One v4.4.3)</span>
+  <span class="badge b-purple">Rust · edition 2024 · stable</span>
+  <span class="badge b-green">فرانت: React/Aurora — دست‌نخورده</span>
+  <span class="badge">تاریخ سند: ۲۰۲۶-۱۱-۱۱</span>
+  <span class="badge b-red">جایگزین: هیچ (اولین سند مهاجرت زبان)</span>
+</div>
+
+<p><strong>خلاصه یک‌خطی:</strong> بازنویسی کامل بک‌اند TypeScript مونوریپو Agent-One (سرور، بات، هسته دامنه، قراردادها، AI Gateway) به یک <strong>Rust workspace</strong> شش‌crate، با حفظ کامل فرانت React، قراردادهای API و دیتابیس — و عبور امن از پل <em>dual-run</em> بدون توقف سرویس.</p>
+
+<div class="meta">
+  <div class="card"><div class="lbl">حجم پورت</div><div class="val num">۱۰,۷۱۷ → ~۱۲,۸۶۰ خط</div><div class="sub">TS بک‌اند → Rust (×۱٫۲ پُرحرفی)</div></div>
+  <div class="card"><div class="lbl">تلاش کل</div><div class="val num">~۷۴۶ ساعت</div><div class="sub">≈ ۹۳ نفر-روز ≈ ۱۹ نفر-هفته</div></div>
+  <div class="card"><div class="lbl">تقویم</div><div class="val num">۲۰ هفته ≈ ۵ ماه</div><div class="sub">تک‌توسعه‌دهنده + ۱ هفته بافر</div></div>
+  <div class="card"><div class="lbl">تست هدف</div><div class="val num">۲۹۶ → ~۳۶۰</div><div class="sub">پورت ۱۸۷ بک‌اند + parity/property</div></div>
+  <div class="card"><div class="lbl">هزینه (۳ نرخ بازار)</div><div class="val num">$15K / $45K / $97K</div><div class="sub">برون‌سپاری / فریلنسر ارشد / آژانس</div></div>
+  <div class="card"><div class="lbl">خروجی نهایی</div><div class="val">تک‌باینری مستقل</div><div class="sub">بدون Node runtime · بدون GC</div></div>
+</div>
+
+<!-- ═══════════════ TOC ═══════════════ -->
+<div class="toc">
+  <div class="t-ttl">📑 فهرست</div>
+  <ol>
+    <li><a href="#summary">خلاصه مدیریتی</a></li>
+    <li><a href="#context">زمینه — سه نسل و شواهد Rust-ready</a></li>
+    <li><a href="#goals">اهداف و غیر-اهداف</a></li>
+    <li><a href="#diagram">معماری قبل/بعد</a></li>
+    <li><a href="#criteria">معیارهای تصمیم</a></li>
+    <li><a href="#stack">نگاشت استک هدف</a></li>
+    <li><a href="#phases">فازهای ۰ تا ۸ + معیار پذیرش</a></li>
+    <li><a href="#code">اسکچ کد Rust</a></li>
+    <li><a href="#gantt">تایم‌لاین گانت</a></li>
+    <li><a href="#effort">تخمین تلاش و هزینه</a></li>
+    <li><a href="#risk">ریسک‌ها</a></li>
+    <li><a href="#rollback">پلن Rollback و dual-run</a></li>
+    <li><a href="#dod">تعریف Done</a></li>
+    <li><a href="#appendix">پیوست — نگاشت فایل‌ها و ابزارها</a></li>
+  </ol>
+</div>
+
+<!-- ═══════════════ 1. EXEC SUMMARY ═══════════════ -->
+<h2 id="summary">۱) خلاصه مدیریتی</h2>
+
+<p>امپراتوری DropAgentX در سه نسل تکامل خورده و نسل سوم (Agent-One) هسته‌ای ساخته که <strong>فلسفه‌اش از روز اول Rust بوده</strong>: پول عدد صحیح برندشده، الگوی <code>Result</code> دست‌ساز با ممنوعیت عبور exception از مرز دامنه، و هسته‌ای با <strong>صفر وابستگی ران‌تایم</strong>. این سند مسیر برداشتن «لباس TypeScript» از این معماری و پوشاندن آن با زبانی می‌دهد که آن مفاهیم را به‌جای شبیه‌سازی، <strong>به‌صورت بومی و کامپایلری</strong> تضمین می‌کند.</p>
+
+<div class="alert a-note">
+  <span class="ttl">💡 چرا الان بهترین پنجره است؟</span>
+  <p>فاز ۷ نقشه راه فعلی (پورت قابلیت‌های نسل ۱: USDT، گیمیفیکیشن، حافظه) <strong>هنوز شروع نشده</strong>. هر قابلیتی که اول به Node دوخته شود، بعداً باید دوباره به Rust پورت شود — یعنی هر هفته تأخیر در تصمیم، هزینه مهاجرت را بیشتر می‌کند. این سند را باید قبل از فاز ۷ تصویب کرد.</p>
+</div>
+
+<table>
+  <thead><tr><th style="width:26%">محور تصمیم</th><th>جمع‌بندی</th></tr></thead>
+  <tbody>
+    <tr><td><strong>استراتژی</strong></td><td>بازنویسی کامل بک‌اند به Rust (به انتخاب مالک) — نه Rust-core هیبرید، نه وضعیت quo. فرانت و قراردادهای HTTP دست‌نخورده می‌مانند.</td></tr>
+    <tr><td><strong>دامنه پورت</strong></td><td>۷ پکیج TS بک‌اند به حجم <span class="num">۱۰,۷۱۷</span> خط: <code>domain · server · bot · ai-gateway · llm · contracts · nation</code>. داشبورد (<span class="num">۶,۵۱۳</span>) و Mini App (<span class="num">۳,۰۰۹</span>) در React می‌مانند.</td></tr>
+    <tr><td><strong>تلاش</strong></td><td><span class="num">~۷۴۶ ساعت</span> خالص (۱۹ نفر-هفته) → <strong>۲۰ هفته تقویمی</strong> با فازبندی زیر؛ مدل محاسبه: نرخ بهره‌وری <span class="num">۲۸</span> خط/ساعت برای «پورت با اسپکِ تست‌محور» + سربار ۱٫۲۵ + ضریب یادگیری ۱٫۳.</td></tr>
+    <tr><td><strong>ریسک اصلی</strong></td><td>اختلاف رفتار در گذار (parity drift) و ناهماهنگی قابلیت‌های teloxide با grammY — هر دو با پلن <a href="#rollback">dual-run</a> و گلوگاه parity مهار می‌شوند.</td></tr>
+    <tr><td><strong>بازده استراتژیک</strong></td><td>تک‌باینری مستقل (~۲۰MB)، حافظه مقصد ~۲۰–۳۰MB (تخمینی، در برابر ~۱۲۰–۱۵۰MB اکوسیستم Node)، استارت سرد زیر ۱۰۰ms (تخمینی)، حذف کامل کلاس‌های باگ null/data-race، و — مهم‌تر — <strong>ادعای فروش قابل‌دفاع «هسته مالی memory-safe و قابل‌آدیت»</strong> برای مشتریان سازمانی وایت‌لیبل.</td></tr>
+    <tr><td><strong>چیزی که بدتر می‌شود</strong></td><td>سرعت iterate روی فیچرهای AI/JSON، pool استخدامی کوچک‌تر، و زمان کامپایل طولانی‌تر. این‌ها در <a href="#criteria">معیارهای تصمیم</a> صادقانه شمرده شده‌اند.</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════ 2. CONTEXT ═══════════════ -->
+<h2 id="context">۲) زمینه — سه نسل و شواهد «Rust-ready» بودن کدبیس</h2>
+
+<h3>۲.۱ شجره‌نامه سه‌نسلی</h3>
+<table>
+  <thead><tr><th>نسل</th><th>مخزن</th><th>استک</th><th>وضعیت</th><th>درس تاریخی</th></tr></thead>
+  <tbody>
+    <tr><td><strong>۱</strong></td><td>HermesA (Python, v4.2.0)</td><td>FastAPI + aiogram + SQLite</td><td>🟢 تست زنده — ۴۶۶ کاربر، USDT واقعی</td><td>اثبات PMF؛ اما حسابداری float سوراخ بود (۱۰۱ خرید بدون ردیف tx، گپ −۶۳ Đ)</td></tr>
+    <tr><td><strong>۲</strong></td><td>AgentX v1.5.1 (TS)</td><td>سوپر-اپ + اقتصاد بسته Đ/DNX</td><td>🟡 roadmap 3/6</td><td>منشور ۱۰ ماده‌ای و ممیزی 187,672.8 Đ — ثابت کرد «policy قابل‌تست» شدنی است</td></tr>
+    <tr><td><strong>۳</strong></td><td><strong>Agent-One v4.4.3</strong></td><td>مونوریپو شش‌ضلعی TS</td><td>🟢 ۲۹۶ تست، فازهای ۰–۶ ✅</td><td>دامنه‌محور، fail-closed، قراردادهای zod→OpenAPI — <strong>موضوع این مهاجرت</strong></td></tr>
+  </tbody>
+</table>
+
+<h3>۲.۲ سه شاهد از خود کد که معماری از قبل Rust فکر می‌کند</h3>
+
+<table>
+  <thead><tr><th style="width:30%">شاهد (فایل واقعی)</th><th>چه کاری در TS انجام می‌شود؟</th><th>در Rust چه می‌شود؟</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><code>back/domain/src/money.ts</code></td>
+      <td>تایپ برندشده دست‌ساز <code>Din = number &amp; {[dinBrand]:'DNX'}</code> + چک‌های ران‌تایم <code>isSafeInteger</code> در هر عملیات</td>
+      <td><code>struct Din(u64)</code> با <code>TryFrom</code> — برندینگ <strong>زبان‌سطح</strong>؛ چک یک‌بار در مرز، بعد از آن «نادرست» غیرقابل‌نمایش است</td>
+    </tr>
+    <tr>
+      <td><code>back/domain/src/errors.ts</code></td>
+      <td><code>Result&lt;T&gt;</code> یونیون دست‌ساز + ۲۰ کد خطا + قانون «no exceptions cross the domain boundary»</td>
+      <td><code>Result&lt;T, DomainError&gt;</code> + عملگر <code>?</code> — بومی؛ کامپایلر عبور خطای پردازش‌نشده را <strong>اجازه نمی‌دهد</strong></td>
+    </tr>
+    <tr>
+      <td><code>back/domain/package.json</code></td>
+      <td><code>dependencies: {}</code> — هسته دامنه صفر وابستگی ران‌تایم</td>
+      <td>crate خالص <code>dropagentx-domain</code>؛ بدون I/O و بدون async؛ قابل کامپایل به native و WASM بدون تغییر یک خط</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="alert a-tip">
+  <span class="ttl">✅ نتیجه</span>
+  <p>این کدبیس «شبیه‌سازی Rust در TypeScript» است — یعنی مهاجرت، ترجمه‌ی مفاهیمی است که <strong>از قبل با ذهنیت Rust طراحی شده‌اند</strong>. گران‌ترین بخش مهاجرت‌های معمول (بازطراحی معماری) اینجا از قبل انجام شده؛ همین موضوع نرخ بهره‌وری ۲۸ خط/ساعت (به‌جای نرخ greenfield) را قابل‌دفاع می‌کند.</p>
+</div>
+
+<h3>۲.۳ چه چیزی به Rust؟ چه چیزی نه؟</h3>
+<table>
+  <thead><tr><th>جزء</th><th>LOC فعلی</th><th>تصمیم</th><th>دلیل</th></tr></thead>
+  <tbody>
+    <tr><td><code>back/domain</code></td><td class="num">1,464</td><td>🦀 Rust — فاز ۱</td><td>قلب تضمین‌های مالی؛ بیشترین بازده کامپایلری</td></tr>
+    <tr><td><code>back/server</code></td><td class="num">3,214</td><td>🦀 Rust — فاز ۴</td><td>Axum + sqlx جایگزین Fastify + Prisma</td></tr>
+    <tr><td><code>back/bot</code></td><td class="num">1,516</td><td>🦀 Rust — فاز ۵</td><td>teloxide + orchestrator خالص (همان الگو)</td></tr>
+    <tr><td><code>back/ai-gateway</code> + <code>llm</code></td><td class="num">2,504</td><td>🦀 Rust — فاز ۶</td><td>fallback قطعی ۳ اسلات، redaction، cap — همه قابل انتقال</td></tr>
+    <tr><td><code>back/contracts</code></td><td class="num">1,446</td><td>🦀 Rust — فاز ۳</td><td>serde + utoipa جایگزین zod→OpenAPI</td></tr>
+    <tr><td><code>packages/nation</code></td><td class="num">573</td><td>🦀 Rust — فاز ۱</td><td>charter/اقتصاد — ادغام در crate دامنه</td></tr>
+    <tr><td><code>front/dashboard</code> + <code>front/webapp</code></td><td class="num">9,522</td><td>🟦 React — می‌ماند</td><td>از طریق همان OpenAPI تغذیه می‌شود؛ WASM اختیاری (فاز ۷)</td></tr>
+    <tr><td><code>front/public-site</code> · <code>legacy/</code> · <code>apps/hermesa</code></td><td>—</td><td>⚪ بی‌تغییر</td><td>استاتیک/بایگانی/معماری مستقل — خارج از دامنه</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════ 3. GOALS ═══════════════ -->
+<h2 id="goals">۳) اهداف و غیر-اهداف</h2>
+
+<h3>🎯 اهداف (Goals)</h3>
+<ul>
+  <li><strong>G1 — صحت کامپایلری پول:</strong> ناممکن‌شدن کلاس‌های باگ overdraft/float/unbalanced در سطح type-system؛ حذف چک‌های ران‌تایم برند.</li>
+  <li><strong>G2 — تک‌باینری عملیاتی:</strong> یک پروسه = سرور + بات + sweep، بدون Node runtime؛ Dockerfile دو مرحله‌ای، ایمیج کوچک‌تر، استارت سرد سریع.</li>
+  <li><strong>G3 — حفظ قراردادها:</strong> همان مسیرهای <code>/api/v1/*</code>، همان OpenAPI 3.1، همان دیتابیس — داشبورد و Mini App <strong>بدون حتی یک خط تغییر</strong> کار کنند.</li>
+  <li><strong>G4 — پورت کامل تست:</strong> ۱۸۷ تست بک‌اند + ~۶۰ parity/property/fuzz جدید = هدف <span class="num">~۲۴۷</span> تست Rust (مجموع با فرانت: <span class="num">~۳۶۰</span>).</li>
+  <li><strong>G5 — گذار بدون توقف:</strong> dual-run با feature-flag درصدی؛ zero downtime؛ rollback یک‌متغیره.</li>
+  <li><strong>G6 — آمادگی فاز ۷:</strong> بعد از cut-over، قابلیت‌های نسل ۱ (USDT ramp، گیمیفیکیشن، حافظه/RL) مستقیماً روی هسته Rust ساخته شوند.</li>
+</ul>
+
+<h3>🚫 غیر-اهداف (Non-Goals)</h3>
+<ul>
+  <li>بازنویسی فرانت React/Aurora یا Mini App (فقط اتصال WASM اختیاری).</li>
+  <li>مهاجرت SQLite→PostgreSQL در همین سیکل (sqlx هر دو را پوشش می‌دهد؛ PG سیکل بعدی).</li>
+  <li>افزودن قابلیت جدید در حین مهاجرت — <strong>feature freeze</strong> روی بک‌اند تا پایان فاز ۸.</li>
+  <li>پورت نسل ۱ (HermesA پایتون) و بایگانی‌ها؛ آن معماری مستقل می‌ماند.</li>
+  <li>microservices — همان تک‌پروسه‌ای بودن فعلی حفظ می‌شود.</li>
+</ul>
+
+<!-- ═══════════════ 4. DIAGRAM ═══════════════ -->
+<h2 id="diagram">۴) معماری قبل/بعد</h2>
+
+<div class="diagram">
+<svg viewBox="0 0 980 470" xmlns="http://www.w3.org/2000/svg" font-family="Vazirmatn,Tahoma,sans-serif" font-size="12">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#59636e"/>
+    </marker>
+    <marker id="arrb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#0969da"/>
+    </marker>
+  </defs>
+  <!-- BEFORE panel -->
+  <text x="250" y="28" text-anchor="middle" font-weight="800" font-size="15" fill="#1f2328">قبل — Agent-One v4.4.3 (TypeScript)</text>
+  <rect x="15" y="40" width="470" height="400" rx="12" fill="#f6f8fa" stroke="#d1d9e0"/>
+  <rect x="40" y="60" width="200" height="42" rx="8" fill="#dbeafe" stroke="#54aeff"/>
+  <text x="140" y="80" text-anchor="middle" font-weight="700">React Dashboard (Aurora)</text>
+  <text x="140" y="95" text-anchor="middle" font-size="10" fill="#59636e">6,513 خط — دست‌نخورده</text>
+  <rect x="255" y="60" width="200" height="42" rx="8" fill="#dbeafe" stroke="#54aeff"/>
+  <text x="355" y="80" text-anchor="middle" font-weight="700">Mini App · ۳۳ صفحه</text>
+  <text x="355" y="95" text-anchor="middle" font-size="10" fill="#59636e">3,009 خط — دست‌نخورده</text>
+  <rect x="40" y="125" width="415" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="247" y="146" text-anchor="middle" font-weight="700">zod contracts → OpenAPI 3.1</text>
+  <text x="247" y="164" text-anchor="middle" font-size="10" fill="#59636e">1,446 خط — typed client + docs</text>
+  <rect x="40" y="196" width="200" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="140" y="217" text-anchor="middle" font-weight="700">Fastify v5 (server)</text>
+  <text x="140" y="235" text-anchor="middle" font-size="10" fill="#59636e">3,214 خط · X-KIA-Key · audit</text>
+  <rect x="255" y="196" width="200" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="355" y="217" text-anchor="middle" font-weight="700">grammY (bot)</text>
+  <text x="355" y="235" text-anchor="middle" font-size="10" fill="#59636e">1,516 خط · orchestrator خالص</text>
+  <rect x="40" y="267" width="200" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="140" y="288" text-anchor="middle" font-weight="700">AI Gateway + LLM</text>
+  <text x="140" y="306" text-anchor="middle" font-size="10" fill="#59636e">2,504 خط · ۶ ایجنت · ۱۶ مهارت</text>
+  <rect x="255" y="267" width="200" height="52" rx="8" fill="#fff8c5" stroke="#d4a72c"/>
+  <text x="355" y="288" text-anchor="middle" font-weight="700">Node.js runtime</text>
+  <text x="355" y="306" text-anchor="middle" font-size="10" fill="#9a6700">~120–150MB RAM · GC · npm supply-chain</text>
+  <rect x="40" y="338" width="415" height="46" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="247" y="357" text-anchor="middle" font-weight="700">TS domain core (خالص، deps: {})</text>
+  <text x="247" y="374" text-anchor="middle" font-size="10" fill="#59636e">2,037 خط · Result دست‌ساز · Din برندشده</text>
+  <rect x="40" y="398" width="415" height="30" rx="8" fill="#f0f6ff" stroke="#54aeff"/>
+  <text x="247" y="417" text-anchor="middle" font-size="11" font-weight="700" fill="#0969da">Prisma → SQLite (schema.prisma → PG-ready)</text>
+  <!-- arrows before -->
+  <line x1="140" y1="102" x2="140" y2="125" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="355" y1="102" x2="355" y2="125" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="140" y1="177" x2="140" y2="196" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="355" y1="177" x2="355" y2="196" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="140" y1="248" x2="140" y2="267" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="355" y1="248" x2="355" y2="267" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="247" y1="319" x2="247" y2="338" stroke="#59636e" marker-end="url(#arr)"/>
+  <line x1="247" y1="384" x2="247" y2="398" stroke="#59636e" marker-end="url(#arr)"/>
+  <!-- AFTER panel -->
+  <text x="735" y="28" text-anchor="middle" font-weight="800" font-size="15" fill="#0969da">بعد — Rust Workspace (هدف)</text>
+  <rect x="500" y="40" width="465" height="400" rx="12" fill="#f0f6ff" stroke="#54aeff"/>
+  <rect x="525" y="60" width="200" height="42" rx="8" fill="#ffffff" stroke="#54aeff"/>
+  <text x="625" y="80" text-anchor="middle" font-weight="700">React Dashboard (Aurora)</text>
+  <text x="625" y="95" text-anchor="middle" font-size="10" fill="#59636e">بدون تغییر — همان OpenAPI</text>
+  <rect x="740" y="60" width="200" height="42" rx="8" fill="#ffffff" stroke="#54aeff"/>
+  <text x="840" y="80" text-anchor="middle" font-weight="700">Mini App · ۳۳ صفحه</text>
+  <text x="840" y="95" text-anchor="middle" font-size="10" fill="#59636e">بدون تغییر (+WASM اختیاری)</text>
+  <rect x="525" y="125" width="415" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="732" y="146" text-anchor="middle" font-weight="700">utoipa → OpenAPI 3.1 (همان مسیرها)</text>
+  <text x="732" y="164" text-anchor="middle" font-size="10" fill="#59636e">serde + schemars · typed client حفظ می‌شود</text>
+  <rect x="525" y="196" width="200" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="625" y="217" text-anchor="middle" font-weight="700">Axum 0.8 (server)</text>
+  <text x="625" y="235" text-anchor="middle" font-size="10" fill="#59636e">X-KIA-Key · rate-limit · audit · tower</text>
+  <rect x="740" y="196" width="200" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="840" y="217" text-anchor="middle" font-weight="700">teloxide (bot)</text>
+  <text x="840" y="235" text-anchor="middle" font-size="10" fill="#59636e">orchestrator خالص قابل‌تست آفلاین</text>
+  <rect x="525" y="267" width="200" height="52" rx="8" fill="#fff" stroke="#d1d9e0"/>
+  <text x="625" y="288" text-anchor="middle" font-weight="700">AI Gateway + LLM</text>
+  <text x="625" y="306" text-anchor="middle" font-size="10" fill="#59636e">reqwest · fallback ۳ اسلات · redaction</text>
+  <rect x="740" y="267" width="200" height="52" rx="8" fill="#dbeafe" stroke="#0969da"/>
+  <text x="840" y="288" text-anchor="middle" font-weight="700">یک باینری single-process</text>
+  <text x="840" y="306" text-anchor="middle" font-size="10" fill="#0969da">~20MB · بدون GC · استارت سرد &lt;100ms</text>
+  <rect x="525" y="338" width="415" height="46" rx="8" fill="#dafbe1" stroke="#4ac26b"/>
+  <text x="732" y="357" text-anchor="middle" font-weight="800" fill="#1a7f37">crate «dropagentx-domain» — تضمین‌های کامپایلری</text>
+  <text x="732" y="374" text-anchor="middle" font-size="10" fill="#1a7f37">Din newtype · Result بومی · enum match جامع · بدون panic در مرز</text>
+  <rect x="525" y="398" width="415" height="30" rx="8" fill="#f0f6ff" stroke="#54aeff"/>
+  <text x="732" y="417" text-anchor="middle" font-size="11" font-weight="700" fill="#0969da">sqlx → همان SQLite (compile-time checked queries)</text>
+  <!-- arrows after -->
+  <line x1="625" y1="102" x2="625" y2="125" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="840" y1="102" x2="840" y2="125" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="625" y1="177" x2="625" y2="196" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="840" y1="177" x2="840" y2="196" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="625" y1="248" x2="625" y2="267" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="840" y1="248" x2="840" y2="267" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="732" y1="319" x2="732" y2="338" stroke="#0969da" marker-end="url(#arrb)"/>
+  <line x1="732" y1="384" x2="732" y2="398" stroke="#0969da" marker-end="url(#arrb)"/>
+  <!-- cut line -->
+  <line x1="492" y1="15" x2="492" y2="455" stroke="#cf222e" stroke-width="2" stroke-dasharray="7 5"/>
+  <text x="492" y="466" text-anchor="middle" font-size="11" font-weight="800" fill="#cf222e">مرز مهاجرت</text>
+</svg>
+<div class="dg-cap">شکل ۱ — نیمه چپ: وضعیت فعلی TS. نیمه راست: هدف Rust. سبز: هسته دامنه با تضمین کامپایلری. آبی: لایه‌های عملیاتی. فرانت هر دو سمت یکسان است.</div>
+</div>
+<!-- ═══════════════ 5. CRITERIA ═══════════════ -->
+<h2 id="criteria">۵) معیارهای تصمیم — صادقانه، دو طرف ترازو</h2>
+
+<table>
+  <thead><tr><th style="width:20%">معیار</th><th style="width:27%">وضعیت quo (TypeScript)</th><th style="width:27%">Rust (هدف)</th><th>حکم برای این پروژه</th></tr></thead>
+  <tbody>
+    <tr><td><strong>صحت مالی</strong></td><td>Result دست‌ساز + چک ران‌تایم؛ خطای منطقی فقط در تست یا Production دیده می‌شود</td><td>enum + match جامع + newtype — <strong>کد نادرست کامپایل نمی‌شود</strong></td><td>🟢 Rust — این «چرایی» اصلی مهاجرت است</td></tr>
+    <tr><td><strong>حافظه / GC</strong></td><td>V8 + GC؛ سربار ~۱۲۰–۱۵۰MB (تخمینی)</td><td>بدون GC؛ ~۲۰–۳۰MB (تخمینی) — predictable latency</td><td>🟢 Rust — ولی در مقیاس ۴۶۶ کاربر گلوگاه فعلی نیست</td></tr>
+    <tr><td><strong>دیپلوی</strong></td><td>node_modules + runtime + multi-stage docker (~۲۰۰–۴۰۰MB)</td><td>تک‌باینری static ~۲۰MB؛ استارت سرد &lt;۱۰۰ms (تخمینی)</td><td>🟢 Rust — ساده‌سازی عملیاتی واقعی</td></tr>
+    <tr><td><strong>اکوسیستم بات تلگرام</strong></td><td>grammY: menu، webhook auto، Mini-App buttons — batteries included</td><td>teloxide: بالغ و async ولی برخی conveniences دستی‌تر</td><td>🟡 TS — بهترین جلسه grammY؛ با orchestrator خالصِ فعلی قابل جبران</td></tr>
+    <tr><td><strong>سرعت iterate فیچر</strong></td><td>tsc سریع، npm ecosystem عظیم</td><td>کامپایل کندتر، borrow-checker friction در ماه‌های اول</td><td>🔴 Rust — هزینه واقعی؛ در «چیزی که بدتر می‌شود» شمرده شد</td></tr>
+    <tr><td><strong>supply-chain</strong></td><td>npm: هزاران transitive dep، زنجیره حمله وسیع</td><td>crates.io: کوچک‌تر و audit‌پذیرتر (cargo-deny + cargo-audit)</td><td>🟢 Rust — مهم برای ادعای امنیتی محصول</td></tr>
+    <tr><td><strong>استخدام / نگهداشت</strong></td><td>pool بزرگ TS</td><td>pool کوچک‌تر ولی معمولاً قوی‌تر در مفاهیم سیستم</td><td>🟡 خنثی برای تک‌ساز؛ 🟡 ریسک برای تیم آینده</td></tr>
+    <tr><td><strong>داستان فروش</strong></td><td>«تایپ‌سِیف با ۲۹۶ تست»</td><td>«هسته مالی memory-safe، قابل‌آدیت، بدون GC» — ضریب اعتماد سازمانی</td><td>🟢 Rust — مستقیماً به ارزش‌گذاری وایت‌لیبل وصل است</td></tr>
+  </tbody>
+</table>
+
+<div class="alert a-warn">
+  <span class="ttl">⚠️ صادقانه بگوییم</span>
+  <p>اگر معیارِ «سریع‌ترین رسیدن به فاز ۷» تنها معیار بود، TS می‌ماند. این سند روی انتخاب آگاهانه‌ی مالک (بازنویسی کامل) بنا شده؛ پس تمرکز ما <strong>کمینه‌کردن هزینه‌ی مسیر انتخاب‌شده</strong> است — نه اقناع دوباره.</p>
+</div>
+
+<!-- ═══════════════ 6. STACK ═══════════════ -->
+<h2 id="stack">۶) نگاشت استک هدف</h2>
+
+<table class="ltr">
+  <thead><tr><th>لایه فعلی (TS)</th><th>جایگزین Rust</th><th>نسخه/راهنما</th><th>نکته مهاجرت</th></tr></thead>
+  <tbody>
+    <tr><td>Fastify v5 + middleware</td><td><strong>Axum</strong> (tower)</td><td>0.8+</td><td>Extractorها جای hookهای Fastify؛ tower-layer برای rate-limit و X-KIA-Key</td></tr>
+    <tr><td>Prisma + SQLite</td><td><strong>sqlx</strong></td><td>0.8+</td><td><code>query!</code> چک‌شده در کامپایل؛ همان فایل DB، همان اسکیمای فعلی (بدون تغییر جداول)</td></tr>
+    <tr><td>grammY + orchestrator خالص</td><td><strong>teloxide</strong></td><td>0.14+</td><td>orchestrator فعلی بدون grammY است — همان لایه با Rust بازنویسی و آفلاین تست می‌شود؛ webhook از طریق route خود Axum (الگوی std/http فعلی)</td></tr>
+    <tr><td>zod → OpenAPI 3.1</td><td><strong>serde + schemars + utoipa</strong></td><td>5.x</td><td>تولید OpenAPI از derive؛ همان ۲۰+ مسیر؛ typed-client TS با اسکیمای تولیدی regenerate می‌شود (شکستن ADR-005 نیست — بازسازی آن است)</td></tr>
+    <tr><td>کلاینت LLM (ADR-006/008)</td><td><strong>reqwest + serde</strong></td><td>—</td><td>سه‌اسلات همه‌یا-هیچ، timeout با <code>tokio::time</code>، هرگز کلید در لاگ (redaction حفظ می‌شود)</td></tr>
+    <tr><td>Vitest</td><td><strong>cargo test + proptest</strong></td><td>—</td><td>پورت ۱:۱ تست‌های دامنه + property جدید برای invariantها (Σ=0، مالیات ۱۰٪، idempotency replay)</td></tr>
+    <tr><td>turbo + pnpm workspaces</td><td><strong>cargo workspace</strong></td><td>—</td><td>۶ crate؛ lint = clippy؛ CI = GitHub Actions همان الگوی فعلی (fmt→clippy→test→build)</td></tr>
+    <tr><td>typecheck strict</td><td><strong>clippy pedantic + deny(warnings)</strong></td><td>—</td><td><code>#![forbid(unsafe_code)]</code> روی همه crateها — ادعای memory-safe بدون asterisk</td></tr>
+    <tr><td>React 19 / Vite / Tailwind (داشبورد + Mini App)</td><td><strong>دست‌نخورده</strong> 🟦</td><td>—</td><td>Fastify static serving → <code>tower-http ServeDir</code>؛ همان hash-routing؛ WASM اختیاری در فاز ۷</td></tr>
+    <tr><td>الکترون/دسکتاپ (نسل ۲)</td><td>خارج از دامنه</td><td>—</td><td>Non-goal؛ بعد از cut-over تصمیم جدا</td></tr>
+  </tbody>
+</table>
+
+<div class="alert a-note">
+  <span class="ttl">📌 قانون طلایی مهاجرت</span>
+  <p><strong>قرارداد ثابت، پیاده‌سازی متغیر.</strong> هیچ مسیر HTTP، هیچ شکل JSON و هیچ ستون دیتابیسی تغییر نمی‌کند. مهاجرت فقط «موتور زیر در» را عوض می‌کند — همین است که parity testing را ممکن می‌کند و rollback را یک‌متغیره.</p>
+</div>
+
+<!-- ═══════════════ 7. PHASES ═══════════════ -->
+<h2 id="phases">۷) فازهای مهاجرت (۰ تا ۸) — هر فاز با گیت سبز</h2>
+<p>مثل ROADMAP.md نسل سوم: هر فاز خروجی مستقل دارد، فاز بعدی فقط وقتی شروع می‌شود که فاز قبل <strong>سبز</strong> باشد. جمع فازها: <span class="num">۷۲۵</span> ساعت + <span class="num">۲۱</span> ساعت بافر = <span class="num">~۷۴۶</span> ساعت.</p>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 0</span><span class="ptitle">زیرساخت و قواعد بازی</span>
+    <span class="ptags"><span class="tag">۱ هفته · ۲۰h</span><span class="tag">بدون رفتار جدید</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>ساخت <code>rust/</code> workspace در مونوریپو: <code>crates/domain · contracts · server · bot · ai · tooling</code> + <code>members</code> و <code>workspace.dependencies</code> قفل‌شده.</li>
+      <li>CI جدید: <code>cargo fmt --check → clippy -D warnings → cargo test → cargo build --release</code>؛ <code>cargo-deny</code> برای مجوز/آدیت وابستگی‌ها؛ کش sccache.</li>
+      <li>قواعد سراسری: <code>#![forbid(unsafe_code)]</code>، ممنوعیت <code>unwrap/expect</code> خارج از تست (clippy lint سفارشی)، error model یکدست.</li>
+      <li>تصمیم ثبت‌شده: نسخه‌های پایه (axum/teloxide/sqlx/utoipa) + خط‌مشی به‌روزرسانی.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>CI سبز روی workspace خالی با hello-handler؛ قواعد فورس‌شده؛ <code>cargo deny check</code> پاس.</li>
+      <li>سند ADR-009 merge شده و این سند به <code>docs/adr/</code> اضافه شود.</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 1</span><span class="ptitle">هسته دامنه خالص — <code>dropagentx-domain</code></span>
+    <span class="ptags"><span class="tag t-green">قلب مهاجرت</span><span class="tag">۳ هفته · ۱۴۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li><code>money.rs</code>: <code>Din(u64)</code> + <code>TryFrom&lt;i64&gt;</code> + <code>mul_bps</code> با floor و گارد سرریز (پورت ADR-002).</li>
+      <li><code>ledger.rs</code>: دفتر دوطرفه تغییرناپذیر، ≥۲ پستینگ و Σ=0 (پورت ADR-003)، قوانین جهت حساب (user/escrow/treasury هرگز منفی؛ mint هرگز مثبت؛ burn هرگز منفی)، <code>idempotency_key</code> با بازپخش امن.</li>
+      <li><code>escrow.rs</code>: ماشین حالت ۸ وضعیته (پورت ADR-004) با <code>enum EscrowStatus</code> و <code>match</code> جامع + TTL sweep خالص.</li>
+      <li><code>charter.rs</code>: منشور ۱۰ ماده‌ای به‌صورت policy قابل‌تست (مالیات ۱۰٪ با floor، سقف ضرب سالانه، آستانه HITL ۵۰٬۰۰۰ Đ) — ادغام <code>packages/nation</code>.</li>
+      <li><code>events.rs</code>: رویدادهای دامنه با id قطعی.</li>
+      <li>تست‌ها: پورت ۴۰ تست فعلی + property-based جدید (proptest): <strong>۳۰۰ عملیات تصادفی seed-دار → Σ همیشه صفر</strong>؛ replay با idempotency؛ مسیرهای غیرمجاز اسکرو رد؛ مالیات دقیقاً ۱۰٪.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>۴۰/۴۰ تست پورت‌شده سبز + ≥۱۲ property سبز؛ <code>cargo test -p dropagentx-domain</code> تمیز.</li>
+      <li>صفر وابستگی extern در crate؛ <code>#![no_std]</code>-compatible logic (بدون I/O)؛ Miri بدون خطا روی test suite.</li>
+      <li>مقایسه رفتاری: هر fixture موجود TS، خروجی یکسان در Rust (golden files).</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 2</span><span class="ptitle">پیوندersistence — sqlx + Outbox + Genesis</span>
+    <span class="ptags"><span class="tag">۲ هفته · ۸۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>آداپتر persistence: load دفتر کامل در تراکنش تعاملی → اجرای دامنه خالص → persist (الگوی فعلی حفظ می‌شود) با <code>sqlx::Transaction</code>.</li>
+      <li>Outbox برای <code>DomainEvent</code>ها + جدول audit؛ idempotency با unique constraint (مسابقه‌ی retry دوبار پول جابه‌جا نمی‌کند).</li>
+      <li>پورت <code>migrate-legacy.ts</code> → <code>migrate-legacy.rs</code>: ۴۶۶ کاربر → <code>user:tg:&lt;id&gt;</code>، genesis یک‌بارمصرف با idempotency قطعی <code>legacy:genesis:v1</code>، جدول گرد‌کردن صریح ADR-002.</li>
+      <li>پورت <code>genesis-proof.rs</code>: ممیزی خارجی با SQL خام (بدون ORM) — <code>Σ کیف‌ها = 187,672 Đ · Σ پستینگ‌ها = 0</code>.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>اجرای مهاجرت روی snapshot واقعی دیتابیس فعلی → همان عدد 187,672 Đ و <code>trialBalance.balanced == true</code>؛ اجرای دوباره → صفر تغییر (replay امن).</li>
+      <li>۱۶ تست انتگراسیون فعلی سرور (چرخه کامل escrow از HTTP: ۱۰۰ → ۹۰+۱۰) روی Rust+SQLite سبز.</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 3</span><span class="ptitle">قراردادها — serde + utoipa (OpenAPI 3.1)</span>
+    <span class="ptags"><span class="tag">۱٫۵ هفته · ۵۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>پورت ۲۰+ قرارداد فعلی به derive‌های utoipa؛ کدهای خطای سیمی (401/404/422/429) همان‌ها؛ <code>/api/v1/openapi.json</code> و صفحه docs.</li>
+      <li>تولید مجدد typed-client فرانت از اسکیمای جدید + تست راند‌تریپ (<code>app.inject</code> معادل: <code>axum::body + oneshot</code>).</li>
+      <li>لایه امنیت قراردادی: <code>X-KIA-Key</code> با مقایسه زمان‌ثابت (<code>subtle</code>)، fail-closed (بدون کانفیگ → 503)، initData تلگرام با HMAC-SHA256 رسمی، rate-limit درون‌حافظه‌ای (tower-governor).</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>diff اسکیمای OpenAPI جدید با فعلی = <strong>صفر تغییر شکستن‌دهنده</strong> (فقط formatting).</li>
+      <li>typed-client فعلی داشبورد بدون تغییر کد، در برابر سرور Rust راند‌تریپ سبز می‌گیرد (تست قراردادی).</li>
+      <li>۱۱ تست قرارداد فعلی پورت و سبز.</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 4</span><span class="ptitle">سرور Axum + داشبورد static</span>
+    <span class="ptags"><span class="tag">۲٫۵ هفته · ۱۱۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>۱۷+ endpoint از رجیستری واحد (همان الگوی ADR-005): قرارداد + امنیت + handler از یک تعریف.</li>
+      <li><code>tower-http</code>: ServeDir برای <code>front/dashboard/dist</code> و Mini App (جایگزین static serving Fastify) + trace layer → JSON logs همان شکل فعلی.</li>
+      <li>audit log همان ستون‌ها؛ health شامل <code>llmConfigured</code>/<code>llmModel</code> (پورت دقیق).</li>
+      <li>Dockerfile دو مرحله‌ای: <code>builder</code> (rust:slim) → <code>runtime</code> (distroless/slim) — تک‌باینری + assets.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>۲۶ تست سرور فعلی پورت و سبز؛ مسیرهای کامل mint→escrow→release دقیقاً ۹۰/۱۰؛ replay دوبار پرداخت نمی‌کند؛ overdraft رد؛ 401/404/422/429 همان‌ها.</li>
+      <li>داشبورد فعلی (build موجود) در برابر سرور Rust: mint/escrow/اپروال/HITL manual E2E سبز.</li>
+      <li>بوت با کانفیگ ناقص LLM رد می‌شود (همه‌یا-هیچ — پورت دقیق ADR-006).</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 5</span><span class="ptitle">بات teloxide + صف HITL</span>
+    <span class="ptags"><span class="tag">۲ هفته · ۹۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>orchestrator خالص (بدون teloxide) — قابل‌تست آفلاین، همان الگوی فعلی؛ i18n fa/en + نگاشت کد خطای وایر به پیام محلی.</li>
+      <li>۱۴ دستور کاربر + ۵ دستور ادمین + کیبورد شیشه‌ای HITL؛ webhook روی <code>/api/v1/bot/webhook</code> (آداپتور داخل Axum) + polling توسعه.</li>
+      <li>صف HITL روی سرور: <code>/hitl/*</code> — تایید ادمین تسویه را <strong>در همان تراکنش</strong> اجرا می‌کند؛ id قطعی <code>hitl:&lt;id&gt;:approve</code>؛ TTL sweep ۲۴h.</li>
+      <li>Authz fail-closed: خریدار fund/release/dispute/cancel، فروشنده deliver؛ idempotency از message_id تلگرام → retry وب‌هوک امن.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>۲۰ تست بات فعلی پورت و سبز؛ تلاش دوباره update با همان message_id دوبار پول جابه‌جا نمی‌کند.</li>
+      <li>HITL ≥ ۵۰,۰۰۰ Đ از صف می‌گذرد و تاییدش دقیقاً ۹۰/۱۰ تسویه می‌کند؛ ادمین دیگری دوباره تایید کند → خطای typed (بازپرداخت صفر).</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 6</span><span class="ptitle">AI Gateway — ۶ ایجنت، ۱۶ مهارت، سقف و audit</span>
+    <span class="ptags"><span class="tag">۳ هفته · ۱۳۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>سه اسلات ADR-008 (همه‌یا-هیچ + <code>_2/_3</code>)؛ fallback قطعی primary→secondary→fallback؛ نام برنده در پاسخ و audit.</li>
+      <li>۶ ایجنت Zenovix + ۱۶ مهارت KIA-OS با رجیستری واحد؛ هویت/متادیتا fa/en؛ گیت مجوز fail-closed <strong>قبل از</strong> اجرا؛ <code>allowedSkills</code> مشتق از رجیستری.</li>
+      <li>پاکت JSON به‌جای function-calling: <code>{"reply"}</code> یا <code>{"tool","args"}</code> — دو پاکت خراب = شکست typed؛ متن خام هرگز عبور نمی‌کند (serde typed).</li>
+      <li>سقف روزانه per-user (<code>AI_DAILY_TOKEN_CAP</code> = ۱۲۰٬۰۰۰) روی جدول <code>AiUsage</code> — گیت قبل از هر فراخوانی؛ تمام → 429 typed.</li>
+      <li>۹ قاعده redaction (PEM، Bearer، JWT، sk، توکن تلگرام، AWS، کارت، seed phrase، hex) + شمارش در audit؛ ممیزی هر پاسخ: <code>ai.ok|refused|failed|pending</code>.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>۲۹ تست بسته با fake-LLM بدون شبکه + ۹ تست انتگراسیون با provider درون‌پردازشی: قطع primary → secondary جواب می‌دهد؛ سقف تمام → 429 قبل از provider.</li>
+      <li>redaction روی سیم با شمارش در audit؛ escrow_refund ۶۰٬۰۰۰ Đ → ردیف HITL با اسکرو هنوز FUNDED.</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 7</span><span class="ptitle">ادغام فرانت + WASM اختیاری</span>
+    <span class="ptags"><span class="tag">۱ هفته · ۳۵h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>پروکسی کامل داشبورد/Mini App/public-site از Axum؛ CSP همان فعلی؛ فونت‌ها همان self-hosted.</li>
+      <li>(اختیاری) کامپایل <code>dropagentx-domain</code> به WASM برای اعتبارسنجی سمت کلاینت داشبورد — همان قوانین، صفر drift.</li>
+      <li>Lighthouse موبایل ≥۹۰ (باندل/فونت swap) و RTL flip تست fa↔en همان معیار فاز ۴ فعلی.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>E2E مرورگر: داشبورد ↔ Rust — mint→escrow→release دقیق ۹۰/۱۰، دابل‌کلیک = replay بی‌اثر، مهمان ۴۰۱.</li>
+      <li>(اگر WASM فعال شد) خروجی همان توابع در JS-WASM با native بیت‌به‌بیت برابر (golden test).</li></ul></div>
+  </div>
+</div>
+
+<div class="phase">
+  <div class="ph-head"><span class="pnum">Phase 8</span><span class="ptitle">Dual-run → مهاجرت داده → Cut-over</span>
+    <span class="ptags"><span class="tag t-amber">پل بازگشت</span><span class="tag">۳ هفته · ۷۰h</span></span></div>
+  <div class="ph-body">
+    <h4>دامنه کار</h4>
+    <ul>
+      <li>استقرار dual-run (شرح کامل در §12): shadow traffic → درصدی ۱٪→۱۰٪→۵۰٪→۱۰۰٪ با parity gate در هر پله.</li>
+      <li>سوئیت parity: ~۳۰ سناریوی golden (همان ورودی webhook/OpenAPI → مقایسه بایت‌به‌بایت پاسخ + state دیتابیس) + proptest روی invariantها + <code>cargo-fuzz</code> روی پارسرهای ورودی (حداقل: قراردادهای AI و validatorها).</li>
+      <li>لودتست کوتاه (k6/oha): p95 زیر TS baseline در همان سخت‌افزار + حافظه مقصد ثبت‌شده.</li>
+      <li>Runbook عملیاتی: بوت، sweep، بکاپ، panic-free policy، alerting؛ آموزش سوییچ تک‌متغیره.</li>
+      <li>بعد از ۲ هفته ۱۰۰٪ سبز: تگ <code>rust-core-1.0.0</code>، آرشیو Node runtime از production، به‌روزرسانی README و DEPLOY.md.</li>
+    </ul>
+    <div class="accept"><span class="ttl">✅ معیار پذیرش (هدف)</span>
+      <ul><li>۲ هفته پیوسته ۱۰۰٪ روی Rust با صفر parity-fail و صفر rollback.</li>
+      <li>ممیزی نهایی: <code>Σ کیف‌ها = 187,672 Đ</code> و <code>trialBalance.balanced == true</code> — همان عدد نسل‌ها، حالا با هسته Rust.</li></ul></div>
+  </div>
+</div>
+<!-- ═══════════════ 8. CODE ═══════════════ -->
+<h2 id="code">۸) اسکچ کد Rust — لمسِ همان دامنه به زبان هدف</h2>
+
+<h3>۸.۱ پول برندشده — <code>money.rs</code> (پورت ADR-002)</h3>
+<pre><code><span class="c">/// ADR-002 — Money is an integer. Always. Never a float.</span>
+<span class="a">#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]</span>
+<span class="k">pub struct</span> <span class="t">Din</span>(<span class="t">u64</span>);   <span class="c">// فیلد خصوصی — ساخت خارج از مرز غیرممکن است</span>
+
+<span class="k">impl</span> <span class="t">TryFrom</span><span class="k">&lt;</span><span class="t">i64</span><span class="k">&gt;</span> <span class="k">for</span> <span class="t">Din</span> {
+    <span class="k">type</span> <span class="t">Error</span> = <span class="t">DomainError</span>;
+    <span class="k">fn</span> <span class="f">try_from</span>(n: <span class="t">i64</span>) -&gt; <span class="t">Result</span><span class="k">&lt;</span><span class="t">Self</span>, <span class="t">Self::Error</span><span class="k">&gt;</span> {
+        <span class="k">if</span> n &lt; <span class="n">0</span> { <span class="k">return</span> <span class="t">Err</span>(<span class="t">DomainError::NegativeAmount</span>(n)); }
+        <span class="t">Ok</span>(<span class="t">Din</span>(n <span class="k">as</span> <span class="t">u64</span>))        <span class="c">// بعد از این مرز، Din منفی «نوعی ناموجون» است</span>
+    }
+}
+
+<span class="c">/// مالیات ۱۰٪ با floor — منشور ماده ۴؛ کامپایلر سرریز را نشان می‌دهد</span>
+<span class="k">pub fn</span> <span class="f">split_seller_tax</span>(gross: <span class="t">Din</span>, bps: <span class="t">u32</span>) -&gt; <span class="t">Result</span><span class="k">&lt;</span>(<span class="t">Din</span>, <span class="t">Din</span>), <span class="t">DomainError</span><span class="k">&gt;</span> {
+    <span class="k">let</span> raw = (gross.<span class="n">0</span> <span class="k">as</span> <span class="t">u128</span>) * (bps <span class="k">as</span> <span class="t">u128</span>) / <span class="n">10_000</span>;
+    <span class="k">let</span> tax = <span class="t">u64</span>::<span class="f">try_from</span>(raw).<span class="f">map_err</span>(<span class="k">|_|</span> <span class="t">DomainError::AmountOutOfRange</span>)?;
+    <span class="t">Ok</span>((<span class="t">Din</span>(gross.<span class="n">0</span> - tax), <span class="t">Din</span>(tax)))   <span class="c">// (سهم فروشنده، سهم خزانه)</span>
+}</code></pre>
+
+<h3>۸.۲ دفتر دوطرفه — <code>ledger.rs</code> (پورت ADR-003)</h3>
+<pre><code><span class="k">pub fn</span> <span class="f">post</span>(state: &amp;<span class="k">mut</span> <span class="t">LedgerState</span>, postings: <span class="t">Vec</span><span class="k">&lt;</span><span class="t">Posting</span><span class="k">&gt;</span>,
+            idem: <span class="t">Option</span><span class="k">&lt;</span>&amp;<span class="t">str</span><span class="k">&gt;</span>) -&gt; <span class="t">Result</span><span class="k">&lt;</span><span class="t">Rc</span><span class="k">&lt;</span><span class="t">PostedTx</span><span class="k">&gt;</span>, <span class="t">DomainError</span><span class="k">&gt;</span> {
+    <span class="c">// بازپخش امن: کلید تکراری = برگشت تراکنش اصلی، بدون حرکت دوباره‌ی پول</span>
+    <span class="k">if let</span> (<span class="t">Some</span>(k), <span class="t">Some</span>(tx)) = (idem, state.<span class="f">by_idem</span>(k)?) { <span class="k">return</span> <span class="t">Ok</span>(tx); }
+
+    <span class="k">if</span> postings.<span class="f">len</span>() &lt; <span class="n">2</span> { <span class="k">return</span> <span class="t">Err</span>(<span class="t">DomainError::TooFewPostings</span>); }
+    <span class="k">if</span> postings.<span class="f">iter</span>().<span class="f">map</span>(<span class="k">|</span>p<span class="k">|</span> p.amount).<span class="f">sum</span>::&lt;<span class="t">i64</span><span class="k">&gt;</span>() != <span class="n">0</span> {
+        <span class="k">return</span> <span class="t">Err</span>(<span class="t">DomainError::UnbalancedTransaction</span>);   <span class="c">// قاعده مقدس Σ=0</span>
+    }
+    state.<span class="f">apply_direction_rules</span>(&amp;postings)?;   <span class="c">// overdraft/mint/burn → fail-closed</span>
+    state.<span class="f">commit</span>(postings, idem)               <span class="c">// تغییرناپذیر: نسخه جدید state برگردانده می‌شود</span>
+}</code></pre>
+
+<h3>۸.۳ ماشین حالت اسکرو — <code>escrow.rs</code> (پورت ADR-004)</h3>
+<pre><code><span class="k">pub enum</span> <span class="t">EscrowStatus</span> { <span class="t">Created</span>, <span class="t">Funded</span>, <span class="t">Delivered</span>, <span class="t">Released</span>,
+                        <span class="t">Disputed</span>, <span class="t">Refunded</span>, <span class="t">Cancelled</span>, <span class="t">Expired</span> }
+
+<span class="k">impl</span> <span class="t">Escrow</span> {
+    <span class="c">/// هر مسیر غیرمجاز = رد تایپ‌دار. افزودن وضعیت جدید بدون به‌روزرسانی همه‌ی</span>
+    <span class="c">/// transitionها، پروژه را کامپایل نمی‌کند — خطا از تست به کامپایل می‌رود.</span>
+    <span class="k">pub fn</span> <span class="f">transition</span>(&amp;<span class="k">mut</span> <span class="k">self</span>, ev: <span class="t">EscrowEvent</span>) -&gt; <span class="t">Result</span><span class="k">&lt;</span><span class="t">Vec</span><span class="k">&lt;</span><span class="t">DomainEvent</span><span class="k">&gt;</span>, <span class="t">DomainError</span><span class="k">&gt;</span> {
+        <span class="k">match</span> (&amp;<span class="k">self</span>.status, ev) {
+            (<span class="t">EscrowStatus::Created</span>,   ev) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">fund</span>(ev),          <span class="c">// خریدار → اسکرو</span>
+            (<span class="t">EscrowStatus::Funded</span>,    <span class="t">EscrowEvent::Deliver</span>) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">deliver</span>(),
+            (<span class="t">EscrowStatus::Funded</span>,    <span class="t">EscrowEvent::Dispute</span>) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">dispute</span>(),
+            (<span class="t">EscrowStatus::Delivered</span>, <span class="t">EscrowEvent::Release</span>) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">release</span>(),  <span class="c">// ۹۰/۱۰ + مالیات</span>
+            (<span class="t">EscrowStatus::Disputed</span>,  ev) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">arbitrate</span>(ev),      <span class="c">// refund | release</span>
+            (<span class="t">EscrowStatus::Funded</span>,    <span class="t">EscrowEvent::Cancel</span>) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">cancel</span>(),
+            (<span class="t">EscrowStatus::Funded</span>,    <span class="t">EscrowEvent::Expire</span>) <span class="k">=&gt;</span> <span class="k">self</span>.<span class="f">expire</span>(),   <span class="c">// TTL sweep → بازگشت کامل</span>
+            _ <span class="k">=&gt;</span> <span class="t">Err</span>(<span class="t">DomainError::InvalidTransition</span>),
+        }
+    }
+}</code></pre>
+
+<h3>۸.۴ هندلر امن — <code>server/src/routes/escrow.rs</code></h3>
+<pre><code><span class="a">#[utoipa::path(post, path = "/api/v1/escrow/{id}/release", responses((status = 200, body = EscrowView)))]</span>
+<span class="k">pub async fn</span> <span class="f">release</span>(
+    <span class="t">State</span>(st): <span class="t">State</span><span class="k">&lt;</span><span class="t">AppState</span><span class="k">&gt;</span>,
+    <span class="t">RequireKiaKey</span>(_): <span class="t">RequireKiaKey</span>,          <span class="c">// زمان‌ثابت، fail-closed → بدون کلید 401/503</span>
+    <span class="t">Path</span>(id): <span class="t">Path</span><span class="k">&lt;</span><span class="t">EscrowId</span><span class="k">&gt;</span>,
+    <span class="t">Json</span>(req): <span class="t">Json</span><span class="k">&lt;</span><span class="t">ReleaseReq</span><span class="k">&gt;</span>,            <span class="c">// serde: شکل JSON = همان قرارداد فعلی</span>
+) -&gt; <span class="t">Result</span><span class="k">&lt;</span><span class="t">Json</span><span class="k">&lt;</span><span class="t">EscrowView</span><span class="k">&gt;</span>, <span class="t">WireError</span><span class="k">&gt;</span> {
+    <span class="k">let</span> out = st.<span class="f">with_ledger_tx</span>(<span class="k">move</span> <span class="k">|</span>domain<span class="k">|</span> {
+        domain.<span class="f">release_escrow</span>(id, &amp;req.by, req.amount)?      <span class="c">// هسته خالص، بدون I/O</span>
+    }).<span class="k">await</span>?;                                                <span class="c">// outbox + audit در همان tx</span>
+    <span class="t">Ok</span>(<span class="t">Json</span>(out.<span class="f">into_view</span>()))                                 <span class="c">// بدون panic در مرز — همیشه Result</span>
+}</code></pre>
+
+<h3>۸.۵ بات آفلاین‌تست‌پذیر — <code>bot/src/orchestrator.rs</code></h3>
+<pre><code><span class="c">/// همان الگوی فعلی: orchestrator بدون وابستگی به teloxide — آفلاین و قطعی تست می‌شود.</span>
+<span class="k">pub fn</span> <span class="f">handle_update</span>(env: &amp;<span class="k">mut</span> <span class="t">Domain</span>, msg: &amp;<span class="t">WireMessage</span>) -&gt; <span class="t">Result</span><span class="k">&lt;</span><span class="t">Vec</span><span class="k">&lt;</span><span class="t">BotAction</span><span class="k">&gt;</span>, <span class="t">WireError</span><span class="k">&gt;</span> {
+    <span class="k">match</span> msg.command() {
+        <span class="t">Some</span>(<span class="t">Cmd::Balance</span>)  <span class="k">=&gt;</span> <span class="t">Ok</span>(<span class="f">reply_balance</span>(env, msg.from)),
+        <span class="t">Some</span>(<span class="t">Cmd::Buy</span>)      <span class="k">=&gt;</span> <span class="f">buy_flow</span>(env, msg),          <span class="c">// fund → escrow (idempotent از message_id)</span>
+        <span class="t">Some</span>(<span class="t">Cmd::Orders</span>)   <span class="k">=&gt;</span> <span class="f">list_orders</span>(env, msg.from),
+        <span class="t">Some</span>(<span class="t">Cmd::AdminApprove</span>) <span class="k">=&gt;</span> <span class="f">hitl_approve</span>(env, msg),    <span class="c">// تسویه اتمیک در همان تراکنش</span>
+        _ <span class="k">=&gt;</span> <span class="t">Ok</span>(<span class="f">menu_reply</span>(msg.from, env.locale())),          <span class="c">// i18n fa/en — همان کیبورد شیشه‌ای</span>
+    }
+}
+<span class="c">// teloxide فقط «رانر» است: update → orchestrator → actions → send</span></code></pre>
+
+<!-- ═══════════════ 9. GANTT ═══════════════ -->
+<h2 id="gantt">۹) تایم‌لاین گانت — ۲۰ هفته (محور زمان چپ→راست)</h2>
+
+<div class="gantt">
+<div class="g-inner">
+  <div class="g-row head">
+    <div class="glabel" style="direction:rtl">فاز / هفته</div>
+    <div class="wk">1</div><div class="wk">2</div><div class="wk">3</div><div class="wk">4</div><div class="wk">5</div><div class="wk">6</div><div class="wk">7</div><div class="wk">8</div><div class="wk">9</div><div class="wk">10</div><div class="wk">11</div><div class="wk">12</div><div class="wk">13</div><div class="wk">14</div><div class="wk">15</div><div class="wk">16</div><div class="wk">17</div><div class="wk">18</div><div class="wk">19</div><div class="wk">20</div>
+  </div>
+  <div class="g-row head" style="border-bottom:none">
+    <div class="glabel"></div>
+    <div class="g-month" style="grid-column:2 / span 5">ماه ۱</div><div class="g-month" style="grid-column:7 / span 4">ماه ۲</div><div class="g-month" style="grid-column:11 / span 5">ماه ۳</div><div class="g-month" style="grid-column:16 / span 5">ماه ۴–۵</div>
+  </div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P0 زیرساخت</div>
+    <div class="g-bar c1" style="grid-column:2 / span 1">1w</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P1 هسته دامنه 🦀</div>
+    <div class="g-bar c2" style="grid-column:3 / span 3">3w — domain crate + ۴۰ تست</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P2 persistence</div>
+    <div class="g-bar c3" style="grid-column:6 / span 2">2w</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P3 قراردادها</div>
+    <div class="g-bar c4" style="grid-column:7 / span 2">1.5w</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P4 سرور Axum</div>
+    <div class="g-bar c5" style="grid-column:8 / span 3">2.5w</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P5 بات + HITL</div>
+    <div class="g-bar c6" style="grid-column:11 / span 2">2w</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P6 AI Gateway</div>
+    <div class="g-bar c7" style="grid-column:13 / span 3">3w — ۶ ایجنت + ۱۶ مهارت</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P7 داشبورد / WASM</div>
+    <div class="g-bar c8" style="grid-column:16 / span 1">1w</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">P8 dual-run → cut-over</div>
+    <div class="g-bar c9" style="grid-column:17 / span 3">3w — shadow → ۱٪ → ۱۰٪ → ۵۰٪ → ۱۰۰٪</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">🟢 rust-core-1.0.0</div>
+    <div style="grid-column:20; text-align:center; font-size:15px">◆</div></div>
+  <div class="g-row"><div class="glabel" style="direction:rtl">بافر / جذب لغزش</div>
+    <div class="g-bar" style="grid-column:19 / span 2; background:#e7ebef; color:#57606a">buffer</div></div>
+</div>
+<div class="g-legend">
+  <span><i class="c1"></i>زیرساخت</span><span><i class="c2"></i>دامنه</span><span><i class="c3"></i>پیوند داده</span>
+  <span><i class="c4"></i>قرارداد</span><span><i class="c5"></i>سرور</span><span><i class="c6"></i>بات</span>
+  <span><i class="c7"></i>AI</span><span><i class="c8"></i>فرانت‌ادغام</span><span><i class="c9"></i>گذار</span>
+  <span>◆ cut-over</span>
+</div>
+</div>
+
+<div class="alert a-note"><span class="ttl">📌 قواعد گانت</span>
+<p>۱) هم‌پوشانی‌ها عمدی‌اند (P3 روی دم‌ P2؛ P4 روی دم P3) — فقط وقتی مجاز است که گیت قبلی سبز باشد. ۲) بعد از هفته ۱۶، هیچ فیچر جدیدی به TS production اضافه نمی‌شود (freeze). ۳) هر لغزش بیش از ۳ روز = مصرف بافر، نه فشرده‌کردن P8 — گذار هرگز فشرده نمی‌شود.</p></div>
+
+<!-- ═══════════════ 10. EFFORT ═══════════════ -->
+<h2 id="effort">۱۰) تخمین تلاش و هزینه</h2>
+
+<h3>۱۰.۱ مدل محاسبه (شفاف و قابل‌حمله)</h3>
+<table>
+  <thead><tr><th>پارامتر</th><th>مقدار</th><th>منطق</th></tr></thead>
+  <tbody>
+    <tr><td>خط مؤثر TS بک‌اند (اندازه‌گیری‌شده)</td><td class="num">10,717</td><td>شمارش واقعی ۷ پکیج — بدون generated/lock</td></tr>
+    <tr><td>ضریب پُرحرفی Rust</td><td class="num">×1.2</td><td>newtype/TryFrom/error enums/exhaustive match — ولی macroها بخشی را جبران می‌کنند</td></tr>
+    <tr><td>حجم هدف Rust</td><td class="num">~12,860 (±1,500)</td><td>—</td></tr>
+    <tr><td>نرخ بهره‌وری</td><td class="num">28 خط/ساعت</td><td>پورت با «اسپک تست‌محور»، نه greenfield (greenfield TS معادل خودِ VALUATION.md: 45 خط/ساعت)</td></tr>
+    <tr><td>سربار طراحی/بررسی/CI</td><td class="num">×1.25</td><td>همان ضرایب سند VALUATION.md</td></tr>
+    <tr><td>ضریب یادگیری</td><td class="num">×1.3</td><td>friction اولین پروژه borrow-checker — فقط به این سیکل تعلق دارد</td></tr>
+    <tr><td><strong>جمع تلاش</strong></td><td class="num"><strong>~746 ساعت</strong></td><td>≈ ۹۳ نفر-روز (۸h) ≈ ۱۹ نفر-هفته (۴۰h)</td></tr>
+  </tbody>
+</table>
+
+<h3>۱۰.۲ تلاش به تفکیک فاز</h3>
+<table class="ltr">
+  <thead><tr><th>فاز</th><th>ساعت</th><th>هفته</th><th>خروجی کلیدی</th></tr></thead>
+  <tbody>
+    <tr><td>P0 زیرساخت</td><td>20</td><td>1</td><td>workspace + CI سبز</td></tr>
+    <tr><td>P1 هسته دامنه</td><td>140</td><td>3</td><td>crate خالص + ۵۲+ تست</td></tr>
+    <tr><td>P2 persistence</td><td>80</td><td>2</td><td>sqlx + outbox + genesis ممیزی‌شده</td></tr>
+    <tr><td>P3 قراردادها</td><td>50</td><td>1.5</td><td>OpenAPI یکسان + typed client</td></tr>
+    <tr><td>P4 سرور</td><td>110</td><td>2.5</td><td>۱۷+ endpoint + static + audit</td></tr>
+    <tr><td>P5 بات + HITL</td><td>90</td><td>2</td><td>۱۹ دستور + صف اتمیک</td></tr>
+    <tr><td>P6 AI Gateway</td><td>130</td><td>3</td><td>۳ اسلات + ۶ ایجنت + ۱۶ مهارت + redaction</td></tr>
+    <tr><td>P7 ادغام فرانت</td><td>35</td><td>1</td><td>E2E + WASM اختیاری</td></tr>
+    <tr><td>P8 گذار</td><td>70</td><td>3</td><td>parity + لودتست + cut-over</td></tr>
+    <tr><td>بافر</td><td>21</td><td>1</td><td>جذب لغزش — نه فشرده‌سازی گذار</td></tr>
+    <tr><th>جمع</th><th>746</th><th>20</th><th>rust-core-1.0.0</th></tr>
+  </tbody>
+</table>
+
+<h3>۱۰.۳ هزینه پولی (روش سه‌نرخِ خودِ VALUATION.md)</h3>
+<table>
+  <thead><tr><th>تراز خرید</th><th>نرخ</th><th>هزینه (۷۴۶h)</th><th>یادداشت</th></tr></thead>
+  <tbody>
+    <tr><td>برون‌سپاری اقتصادی</td><td class="num">$20/h</td><td class="num"><strong>$14,920</strong></td><td>نیازمند QA خودت به‌عنوان گیت کیفیت</td></tr>
+    <tr><td>فریلنسر ارشد (میانه Upwork)</td><td class="num">$60/h</td><td class="num"><strong>$44,760</strong></td><td>منطقی‌ترین تراز برای تراز ریسک/کیفیت</td></tr>
+    <tr><td>آژانس غربی</td><td class="num">$130/h</td><td class="num"><strong>$96,980</strong></td><td>بیشترین سرعت تحویل، کمترین ریسک فرایندی</td></tr>
+    <tr><td>سناریوی مالک-توسعه‌دهنده</td><td class="num">—</td><td class="num">$0 نقدی</td><td>~۵ ماه تقویمی؛ مطابق گانت تک‌نفره بالا</td></tr>
+  </tbody>
+</table>
+
+<div class="alert a-tip"><span class="ttl">💰 منطق اقتصادی</span>
+<p>هزینه سقفِ بدبینانه (~$97K) در برابر ارزش منصفانه اعلام‌شده کل پرتفولیو (~$758K) کمتر از ۱۳٪ است، و مسیر فروش سازمانی وایت‌لیبل (ضریب اعتماد memory-safe) مستقیماً فعال می‌شود. اگر مهاجرت فقط یک قرارداد وایت‌لیبل اضافه کند، خودش را جبران کرده است.</p></div>
+
+<!-- ═══════════════ 11. RISK ═══════════════ -->
+<h2 id="risk">۱۱) ریسک‌های مهاجرت و کاهش آن‌ها</h2>
+
+<table>
+  <thead><tr><th style="width:26%">ریسک</th><th style="width:9%">احتمال</th><th style="width:9%">اثر</th><th>استراتژی کاهش</th></tr></thead>
+  <tbody>
+    <tr><td>باگ مالی حین پورت (بزرگ‌ترین ریسک ذاتي)</td><td>کم</td><td class="num">💥 بحرانی</td><td>P1 اول اجرا می‌شود با پورت ۱:۱ تمام ۴۰ تست + proptest (۳۰۰ عملیات seed‌دار) + Miri + golden fixtures مشترک با TS — هیچ کد پولی بدون تست معادل TS مرج نمی‌شود</td></tr>
+    <tr><td>Parity drift (رفتار متفاوت Rust/TS در گذار)</td><td>زیاد</td><td>زیاد</td><td>سوئیت ~۳۰ سناریوی golden بایت‌به‌بایت + مقایسه state دیتابیس؛ هیچ پله درصدی بدون parity سبز بالا نمی‌رود</td></tr>
+    <tr><td>کمبود قابلیت teloxide نسبت به grammY</td><td>متوسط</td><td>متوسط</td><td>orchestrator خالص (الگوی موجود) teloxide را به «رانر» تقلیل می‌دهد؛ webhook دستی روی Axum (همان الگوی std/http فعلی)؛ دستورهای منو دستی ساخته می‌شوند</td></tr>
+    <tr><td>friction borrow-checker / کندی ماه‌های اول</td><td>زیاد</td><td>متوسط</td><td>ضریب ۱٫۳ در تخمین؛ شروع از crate خالص (ساده‌ترین الگوها)؛ clippy pedantic از روز اول، نه آخر</td></tr>
+    <tr><td>لغزش تقویم تک‌ساز (bus factor = ۱)</td><td>زیاد</td><td>متوسط</td><td>بافر هفته ۱۹–۲۰؛ فازها مستقل و قابل توقف‌اند — هر گیت سبز یک نقطه پارک امن است</td></tr>
+    <tr><td>تغییر سریع کریت‌های اصلی (axum/sqlx/teloxide)</td><td>کم</td><td>کم</td><td>قفل نسخه در workspace + cargo-deny + بررسی ماهانه؛ migration only در گیت فاز</td></tr>
+    <tr><td>رگرسیون عملکرد یا حافظه در production</td><td>کم</td><td>متوسط</td><td>لودتست k6 در P8 با baseline ثبت‌شده TS؛ criterion bench برای مسیر داغ ledger؛ alerting حافظه</td></tr>
+    <tr><td>حجم WASM/پیچیدگی فاز ۷</td><td>کم</td><td>کم</td><td>WASM کاملاً اختیاری است؛ اگر وزن باندل قبح آستانه گذاشت، حذف می‌شود بدون اثر بر مسیر بحرانی</td></tr>
+  </tbody>
+</table>
+
+<!-- ═══════════════ 12. ROLLBACK ═══════════════ -->
+<h2 id="rollback">۱۲) پلن Rollback و dual-run — پل بازگشت همیشه بالاست</h2>
+
+<div class="flow">
+  <div class="step"><div class="st">گام ۱ — Shadow (هفته ۱۶)</div>سرور Rust کنار Node بالا می‌آید؛ ۱۰۰٪ ترافیک واقعی به TS می‌رود؛ Rust همان ورودی‌ها را <strong>سایه‌وار</strong> اجرا و پاسخ‌ها را فقط ثبت می‌کند. معیار خروج: ۷ روز parity سبز.</div>
+  <div class="step"><div class="st">گام ۲ — درصدی (هفته ۱۷–۱۸)</div>فلگ <code class="kbd">RUST_TRAFFIC_PCT</code> = ۱٪ → ۱۰٪ → ۵۰٪ → ۱۰۰٪. هر پله: ۴۸ ساعت پایداری + parity + p95 درست. جابه‌جایی در سطح route است، نه دیتابیس — هر دو روی <strong>همان SQLite</strong> با همان idempotency keys.</div>
+  <div class="step"><div class="st">گام ۳ — تثبیت (هفته ۱۹)</div>۲ هفته ۱۰۰٪ سبز → تگ rust-core-1.0.0 → خاموشی Node در production. TS در همان تگ آخری به‌عنوان گرم‌خانه باقی می‌ماند.</div>
+  <div class="step"><div class="st">🚨 برگشت (هر لحظه)</div><code class="kbd">RUST_TRAFFIC_PCT=0</code> → ترافیک فوراً به TS برمی‌گردد؛ چون هر دو روی یک دیتابیس با invariantهای یکسان کار کرده‌اند، <strong>هیچ مهاجرت برگشتیِ داده لازم نیست</strong>. دامنه مجاز rollback: هر parity-fail، هر discrepancy مالی، p95 بدتر از ۲×baseline.</div>
+</div>
+
+<ul>
+  <li><strong>چرا برگشت ارزان است؟</strong> قانون طلایی §6 — قرارداد ثابت. هر دو پیاده‌سازی همین قرارداد را اجرا می‌کنند؛ state مشترک است؛ پس سوییچ، routing decision است نه data migration.</li>
+  <li><strong>سپر انسانی:</strong> در کل دوره dual-run، تراکنش‌های ≥ ۵۰,۰۰۰ Đ (مسیر HITL) فقط بعد از ۳ روز پایداری کامل به Rust می‌روند — آخرین لایه‌ای که سوییچ می‌شود، اولین چیزی که آدیت می‌شود.</li>
+  <li><strong>مسیر abort کل پروژه:</strong> اگر تا پایان هفته ۱۲ گیت فاز ۴ سبز نشد، پروژه در همان گیت متوقف و به فاز ۷ مسیر TS برمی‌گردد؛ تمام کار تا آن لحظه (domain crate + persistence) به‌عنوان <strong>کتابخانه مالی قابل‌استفاده از TS (NAPI)</strong> ارزش خود را نگه می‌دارد — یعنی حتی «شکست» مسیر کامل، خروجی هیبرید می‌سازد.</li>
+</ul>
+
+<!-- ═══════════════ 13. DOD ═══════════════ -->
+<h2 id="dod">۱۳) تعریف Done — چک‌لیست نهایی سیکل</h2>
+<ul class="check">
+  <li>همه ۹ گیت فازها سبز؛ ۱۸۷ تست بک‌اند پورت‌شده + ≥۶۰ parity/property/fuzz = هدف <span class="num">~۲۴۷</span> (مجموع با فرانت ~۳۶۰)</li>
+  <li><code>cargo clippy -D warnings</code> تمیز + <code>#![forbid(unsafe_code)]</code> سراسری + Miri بدون یافته روی crate دامنه</li>
+  <li>diff OpenAPI = صفر تغییر شکستن‌دهنده؛ داشبورد و Mini App بدون تغییر کد کار می‌کنند</li>
+  <li>ممیزی خارجی: <code>Σ کیف‌ها = 187,672 Đ</code> · <code>Σ پستینگ‌ها = 0</code> · genesis replay بی‌اثر</li>
+  <li>۲ هفته پیوسته ۱۰۰٪ Rust در production، صفر rollback، صفر parity-fail</li>
+  <li>متریک‌های ثبت‌شده: حافظه مقصد، استارت سرد، p95 — در برابر baseline TS مستند</li>
+  <li>تک‌باینری deploy روی Railway با healthcheck سبز؛ runbook عملیاتی و آموزش سوییچ تحویل شده</li>
+  <li>README، DEPLOY.md و ADR-009 به وضعیت نهایی به‌روزرسانی شدند؛ تگ <code>rust-core-1.0.0</code> منتشر شد</li>
+</ul>
+
+<!-- ═══════════════ 14. APPENDIX ═══════════════ -->
+<h2 id="appendix">۱۴) پیوست</h2>
+
+<h3>۱۴.۱ ساختار Rust Workspace هدف</h3>
+<pre><code>rust/
+├── Cargo.toml                  <span class="c"># workspace — نسخه‌ها قفل‌شده</span>
+└── crates/
+    ├── domain/                 <span class="c"># money · ledger · escrow · charter · events (خالص، no I/O)</span>
+    ├── contracts/              <span class="c"># serde types + utoipa + wire-error codes</span>
+    ├── server/                 <span class="c"># axum routes · security · audit · static</span>
+    ├── bot/                    <span class="c"># orchestrator خالص + teloxide runner</span>
+    ├── ai/                     <span class="c"># gateway · llm 3-slot · agents · skills · redaction</span>
+    └── tooling/                <span class="c"># migrate-legacy · genesis-proof · seed · doctor</span></code></pre>
+
+<h3>۱۴.۲ نگاشت فایل‌به‌فایل (گزیده)</h3>
+<table class="ltr">
+  <thead><tr><th>منبع TS</th><th>مقصد Rust</th><th>یادداشت</th></tr></thead>
+  <tbody>
+    <tr><td>back/domain/src/money.ts</td><td>crates/domain/src/money.rs</td><td>برند → newtype؛ TryFrom مرزی</td></tr>
+    <tr><td>back/domain/src/ledger.ts</td><td>crates/domain/src/ledger.rs</td><td>immutable state → owned clone commit</td></tr>
+    <tr><td>back/domain/src/escrow.ts</td><td>crates/domain/src/escrow.rs</td><td>union status → enum + match جامع</td></tr>
+    <tr><td>back/domain/src/charter.ts</td><td>crates/domain/src/charter.rs</td><td>+ ادغام packages/nation charter</td></tr>
+    <tr><td>back/domain/src/errors.ts</td><td>crates/domain/src/error.rs</td><td>۲۰ کد → enum با thiserror</td></tr>
+    <tr><td>back/contracts/src/*.ts</td><td>crates/contracts/src/*.rs</td><td>zod → serde+utoipa derive</td></tr>
+    <tr><td>back/server/src/routes/*.ts</td><td>crates/server/src/routes/*.rs</td><td>رجیستری واحد حفظ می‌شود</td></tr>
+    <tr><td>back/server/src/security/*.ts</td><td>crates/server/src/security/*.rs</td><td>X-KIA-Key زمان‌ثابت (subtle)</td></tr>
+    <tr><td>back/bot/src/orchestrator.ts</td><td>crates/bot/src/orchestrator.rs</td><td>بدون teloxide — آفلاین‌تست</td></tr>
+    <tr><td>back/ai-gateway/src/*.ts</td><td>crates/ai/src/*.rs</td><td>پاکت JSON → serde untagged enum</td></tr>
+    <tr><td>back/llm/src/client.ts</td><td>crates/ai/src/llm.rs</td><td>reqwest + AbortController معادل timeout</td></tr>
+    <tr><td>back/server/scripts/migrate-legacy.ts</td><td>crates/tooling/src/migrate_legacy.rs</td><td>همان idempotency: legacy:genesis:v1</td></tr>
+    <tr><td>back/server/scripts/genesis-proof.ts</td><td>crates/tooling/src/genesis_proof.rs</td><td>SQL خام — بدون ORM</td></tr>
+  </tbody>
+</table>
+
+<h3>۱۴.۳ زرادخانه ابزار</h3>
+<table>
+  <thead><tr><th>نقش</th><th>ابزار</th><th>سیاست</th></tr></thead>
+  <tbody>
+    <tr><td>فرمت / لینت</td><td><code>rustfmt</code> · <code>clippy</code> (pedantic)</td><td>CI گیت — اجازه مرج بدون سبزی وجود ندارد</td></tr>
+    <tr><td>آدیت وابستگی</td><td><code>cargo-deny</code> · <code>cargo-audit</code></td><td>هفتگی + روی هر PR</td></tr>
+    <tr><td>property / fuzz</td><td><code>proptest</code> · <code>cargo-fuzz</code></td><td>اجباری روی invariantهای ledger؛ اختیاری روی پارسرها</td></tr>
+    <tr><td>UB / حافظه</td><td><code>Miri</code></td><td>روی crate دامنه (بدون FFI → عاری از unsafe)</td></tr>
+    <tr><td>بنچمارک</td><td><code>criterion</code></td><td>مسیر داغ: post/release — بایتلاین در CI</td></tr>
+    <tr><td>لودتست</td><td><code>k6</code> / <code>oha</code></td><td>P8 — با baseline TS ثبت‌شده</td></tr>
+  </tbody>
+</table>
+
+<h3>۱۴.۴ منابع این سند</h3>
+<ul>
+  <li>اندازه‌گیری LOC: شمارش مستقیم مخزن <code>KiaAgentX/Agent-One</code> (clone محلی، ۲۰۲۶-۱۱-۱۱)</li>
+  <li>متدولوژی سه‌نرخ هزینه: <code>portfolio/VALUATION.md</code> (همان ضرایب ۱٫۲۵/۱٫۱۵ و نرخ‌های $20/$60/$130)</li>
+  <li>الگوی فازبندی و معیار پذیرش: <code>Agent-One/docs/ROADMAP.md</code> (فازهای ۰–۶ نسل سوم)</li>
+  <li>اعداد ممیزی (187,672 Đ · گپ −۶۳ Đ · ۴۶۶ کاربر): ممیزی genesis و دیتابیس تست ۲۰ روزه (<code>marketplace-20260924-0400.db</code>)</li>
+  <li>مقایسه ارزش بات‌های تلگرام: بازه ۱۸–۳۶×MRR (exitbid، ۲۰۲۶) — مبنای اثر اقتصادی ادعای memory-safe</li>
+</ul>
+
+<div class="alert a-danger"><span class="ttl">🔴 بن‌بست‌های صریح سند (Anti-Goals of Process)</span>
+<p>۱) «فقط این یکی فیچر را اول به TS می‌زنیم» — هر استثنا، هزینه پورت را دوبرابر می‌کند. ۲) «test بعداً اضافه می‌کنیم» — در مسیر پول، تست معادل TS پیش‌نیاز مرج است. ۳) «فشرده کنیم P8 را» — گذار هرگز فشرده نمی‌شود؛ لغزش = بافر. ۴) unsafe برای «بهینه‌تر بودن» — ممنوع مطلق؛ ادعای فروش روی همین بناست.</p></div>
+
+<div class="foot">
+  ADR-009 · DropAgentX Rust Migration Roadmap · تهیه‌شده بر اساس تحلیل خط‌به‌خط مخازن KiaAgentX · ۲۰۲۶-۱۱-۱۱<br>
+  متن سند: فارسی · کد و شناسه‌ها: انگلیسی · سبک: GitHub-docs · تک‌فایل self-contained (بدون هیچ درخواست خارجی)
+</div>
+
+</div>
+</body>
+</html>

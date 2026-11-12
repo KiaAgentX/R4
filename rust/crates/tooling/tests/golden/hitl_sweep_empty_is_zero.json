@@ -1,0 +1,7 @@
+{
+  "name": "hitl_sweep_empty_is_zero",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"expired\":0}",
+  "db": {}
+}

@@ -1,0 +1,7 @@
+{
+  "name": "accounts_list",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"items\":[{\"balance\":0,\"createdAt\":\"<TS>\",\"id\":\"burn:void\",\"kind\":\"burn\",\"label\":\"مقصد سوزاندن\"},{\"balance\":0,\"createdAt\":\"<TS>\",\"id\":\"mint:genesis\",\"kind\":\"mint\",\"label\":\"منبع عرضه (ضرب)\"},{\"balance\":0,\"createdAt\":\"<TS>\",\"id\":\"treasury:nation\",\"kind\":\"treasury\",\"label\":\"خزانه ملی\"},{\"balance\":0,\"createdAt\":\"<TS>\",\"id\":\"user:p1\",\"kind\":\"user\",\"label\":\"parity\"},{\"balance\":0,\"createdAt\":\"<TS>\",\"id\":\"user:p2\",\"kind\":\"user\",\"label\":\"parity\"}]}",
+  "db": {}
+}

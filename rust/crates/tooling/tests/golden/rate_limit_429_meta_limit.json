@@ -1,0 +1,7 @@
+{
+  "name": "rate_limit_429_meta_limit",
+  "status": 429,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"RATE_LIMITED\",\"message\":\"More than 3 requests per minute.\",\"meta\":{\"limit\":3}}}",
+  "db": {}
+}

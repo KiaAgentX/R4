@@ -1,0 +1,11 @@
+{
+  "name": "hitl_second_decision_typed_error",
+  "status": 422,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"HITL_ALREADY_DECIDED\",\"message\":\"HITL request hitl:pa3 has already been decided (APPROVED)\"}}",
+  "db": {
+    "user_wallet_sum": 194000,
+    "treasury": 6000,
+    "escrow:escrow:h3": "RELEASED"
+  }
+}

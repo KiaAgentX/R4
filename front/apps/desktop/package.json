@@ -1,0 +1,10 @@
+{
+  "name": "@agent-one/desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Tauri v2 desktop skeleton — Phase 7 Step 6. Config-only; replaces Electron (D2). The Rust crate lives in src-tauri as a standalone workspace, buildable with `cargo tauri build` on the owner machine (audit §9).",
+  "type": "module",
+  "scripts": {
+    "tauri": "tauri"
+  }
+}

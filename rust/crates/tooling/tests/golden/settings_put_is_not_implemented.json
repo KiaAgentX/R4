@@ -1,0 +1,7 @@
+{
+  "name": "settings_put_is_not_implemented",
+  "status": 501,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"NOT_IMPLEMENTED\",\"message\":\"Settings persistence is not wired yet — branding comes from BRAND_NAME / BRAND_TAGLINE env.\"}}",
+  "db": {}
+}

@@ -1,0 +1,11 @@
+{
+  "name": "dashboard_approval_decide_settles",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"escrowId\":\"escrow:h5\",\"id\":\"hitl:pa5\",\"status\":\"approved\",\"txId\":\"tx_4\"},\"ok\":true}",
+  "db": {
+    "user_wallet_sum": 194000,
+    "treasury": 6000,
+    "escrow:escrow:h5": "RELEASED"
+  }
+}

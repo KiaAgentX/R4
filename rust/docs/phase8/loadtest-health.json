@@ -1,0 +1,16 @@
+{
+  "concurrency": 8,
+  "durationSecs": 10.013408862,
+  "errors": 0,
+  "label": "health",
+  "ok": 2532,
+  "p50ms": 26.197,
+  "p95ms": 56.89,
+  "p99ms": 65.215,
+  "rps": 252.86094225201526,
+  "statuses": {
+    "200": 2532
+  },
+  "totalSamples": 2532,
+  "url": "http://127.0.0.1:3900/api/v1/health"
+}

@@ -1,0 +1,10 @@
+{
+  "name": "@agent-one/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Capacitor skeleton (Android/iOS) — Phase 7 Step 6. Config + sync tooling only; the SDK install, native projects and signing are owner-side (audit §9). No React Native rewrite (D2 family).",
+  "type": "module",
+  "scripts": {
+    "sync:www": "node scripts/sync-www.mjs"
+  }
+}

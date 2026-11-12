@@ -1,0 +1,9 @@
+{
+  "name": "mint_replay_idempotent",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"accountId\":\"user:p1\",\"balance\":100000,\"replayed\":true,\"txId\":\"tx_1\"}",
+  "db": {
+    "user_wallet_sum": 100000
+  }
+}

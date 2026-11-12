@@ -1,0 +1,11 @@
+{
+  "name": "escrow_release_needs_hitl_over_threshold",
+  "status": 422,
+  "content_type": "application/json",
+  "body": "{\"error\":{\"code\":\"REQUIRES_HUMAN_APPROVAL\",\"message\":\"Release of 60000 requires human approval (HITL threshold 50000 Đ)\"}}",
+  "db": {
+    "user_wallet_sum": 140000,
+    "treasury": 0,
+    "escrow:escrow:h0": "DELIVERED"
+  }
+}

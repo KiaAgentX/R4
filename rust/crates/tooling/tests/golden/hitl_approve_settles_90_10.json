@@ -1,0 +1,11 @@
+{
+  "name": "hitl_approve_settles_90_10",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"escrow\":{\"amount\":60000,\"buyerId\":\"user:p1\",\"createdAt\":\"<TS>\",\"deliveryRef\":null,\"disputeReason\":null,\"expiresAt\":null,\"fundedTxId\":\"tx_3\",\"id\":\"escrow:h2\",\"productRef\":null,\"sellerId\":\"user:p2\",\"settleTxId\":\"tx_4\",\"status\":\"RELEASED\"},\"replayed\":false,\"request\":{\"amount\":60000,\"createdAt\":\"<TS>\",\"decidedAt\":\"<TS>\",\"decidedBy\":\"admin:kia\",\"decisionNote\":null,\"escrowId\":\"escrow:h2\",\"expiresAt\":\"<TS>\",\"id\":\"hitl:pa2\",\"kind\":\"ESCROW_RELEASE\",\"note\":null,\"requesterId\":\"user:p1\",\"status\":\"APPROVED\"},\"txId\":\"tx_4\"}",
+  "db": {
+    "user_wallet_sum": 194000,
+    "treasury": 6000,
+    "escrow:escrow:h2": "RELEASED"
+  }
+}

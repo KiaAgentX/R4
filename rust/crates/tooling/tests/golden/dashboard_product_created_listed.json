@@ -1,0 +1,7 @@
+{
+  "name": "dashboard_product_created_listed",
+  "status": 200,
+  "content_type": "application/json",
+  "body": "{\"data\":{\"items\":[{\"category\":\"\",\"createdAt\":\"<TS>\",\"description\":\"\",\"featured\":false,\"id\":\"prod:<UUID>\",\"priceCredits\":500,\"priceStars\":0,\"salesCount\":0,\"sellerId\":\"treasury:nation\",\"status\":\"active\",\"stock\":-1,\"title\":\"Gold pack\"}],\"limit\":12,\"offset\":0,\"total\":1},\"ok\":true}",
+  "db": {}
+}

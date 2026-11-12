@@ -1,0 +1,34 @@
+[package]
+name = "dropagentx-contracts"
+description = "قراردادهای وایر — DTOهای serde + deriveهای utoipa + سازندهٔ OpenAPI 3.1 + لایهٔ امنیت قراردادی (فاز ۳)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+publish = false
+
+[lints]
+workspace = true
+
+[dependencies]
+# وایر — همان JSON ای که TS روی سیم می‌فرستد (camelCase، null صریح، صحیح 2^53−1)
+serde = { workspace = true }
+serde_json = { workspace = true }
+# اسکیمای OpenAPI 3.1 از همان DTOها — بدون منبع دوم حقیقت (ADR-005)
+utoipa = { workspace = true }
+# امنیت قراردادی — مقایسهٔ زمان‌ثابت + طرح رسمی HMAC تلگرام
+subtle = { workspace = true }
+sha2 = { workspace = true }
+hmac = { workspace = true }
+hex = { workspace = true }
+# اعتبارسنجی IsoDateTime (z.string().datetime({offset:true}))
+chrono = { workspace = true }
+# طبقه‌بندی خطا — نگاشت ۲۰ کد دامنه به وضعیت HTTP (منبع واحد کدها)
+dropagentx-domain = { workspace = true }
+
+[dev-dependencies]
+# راند‌تریپ HTTP واقعی بدون شبکه — معادل app.inject فستیفای
+axum = { workspace = true }
+tower = { workspace = true, features = ["util"] }
+http-body-util = { workspace = true }
+tokio = { workspace = true, features = ["macros", "rt"] }

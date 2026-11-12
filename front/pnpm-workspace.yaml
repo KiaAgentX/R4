@@ -1,0 +1,6 @@
+# Agent-One monorepo — Phase 7 Step 2 (audit §7, D12: pnpm via corepack)
+# apps/* land in Step 3 (shell) and later; the glob is declared now so the
+# workspace shape is frozen once and apps drop in without touching this file.
+packages:
+  - packages/*
+  - apps/*

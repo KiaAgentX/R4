@@ -1,0 +1,91 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Aurora base — reset + document defaults (RTL-first, logical properties only)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--aur-bg);
+  color: var(--aur-text);
+  font-family: var(--aur-font-fa);
+  font-size: var(--aur-text-md);
+  line-height: var(--aur-leading);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* English documents flip the stack (fa glyphs still resolve via fallback) */
+html[lang='en'] body,
+[lang='en'] {
+  font-family: var(--aur-font-en);
+}
+
+img,
+picture,
+svg,
+video {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+p,
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  overflow-wrap: break-word;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  line-height: var(--aur-leading-tight);
+}
+
+/* Honest focus everywhere — never removed, only restyled */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--aur-focus);
+  border-radius: var(--aur-radius-sm);
+}
+
+::selection {
+  background: var(--aur-brand-400);
+  color: var(--aur-text-on-brand);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

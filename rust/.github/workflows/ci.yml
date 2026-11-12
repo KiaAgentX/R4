@@ -1,0 +1,33 @@
+name: ci
+on:
+  push:
+    branches: [main]
+    paths: ["rust/**"]
+  pull_request:
+    paths: ["rust/**"]
+
+defaults:
+  run:
+    working-directory: rust
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: "1.99.1"
+          components: clippy, rustfmt
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: rust
+      # خط لوله ADR-009: fmt → clippy → test → build
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy (deny warnings)
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: test
+        run: cargo test --workspace
+      - name: build release
+        run: cargo build --release
